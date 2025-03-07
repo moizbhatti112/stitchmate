@@ -14,12 +14,15 @@ class LuxuryGroundTransportation extends StatefulWidget {
 
 class _LuxuryGroundTransportationState extends State<LuxuryGroundTransportation>
     with SingleTickerProviderStateMixin {
+      final _formKey = GlobalKey<FormState>();
   late TabController _tabController;
-  final TextEditingController _pickupLocationController = TextEditingController();
-  final TextEditingController _dropoffLocationController = TextEditingController();
+  final TextEditingController _pickupLocationController =
+      TextEditingController();
+  final TextEditingController _dropoffLocationController =
+      TextEditingController();
   final TextEditingController _dateController = TextEditingController();
   final TextEditingController _timeController = TextEditingController();
-  
+  final TextEditingController _durationController = TextEditingController();
   @override
   void initState() {
     super.initState();
@@ -160,13 +163,11 @@ class _LuxuryGroundTransportationState extends State<LuxuryGroundTransportation>
         SizedBox(height: size.height * 0.03),
 
         _buildPickupTimeSelector(),
-        
+
         SizedBox(height: size.height * 0.06),
         //Divider
-          Divider(
-          color: grey,
-        ),
-          SizedBox(height: size.height * 0.02),
+        Divider(color: grey),
+        SizedBox(height: size.height * 0.02),
         _buildContinueButton(),
       ],
     );
@@ -181,12 +182,10 @@ class _LuxuryGroundTransportationState extends State<LuxuryGroundTransportation>
         SizedBox(height: size.height * 0.015),
         _buildDurationSelector(),
         SizedBox(height: size.height * 0.015),
-       SizedBox(height: size.height * 0.06),
-          Divider(
-          color: grey,
-        ),
-          SizedBox(height: size.height * 0.02),
-        _buildContinueButton(),
+        SizedBox(height: size.height * 0.06),
+        Divider(color: grey),
+        SizedBox(height: size.height * 0.02),
+        _buildContinueButtonForHour(),
       ],
     );
   }
@@ -253,21 +252,17 @@ class _LuxuryGroundTransportationState extends State<LuxuryGroundTransportation>
           ),
         ),
         Spacer(),
-        Expanded(
-          flex: 7,
-          child: _builddate('Date', _dateController, context),
-        ),
+        Expanded(flex: 7, child: _builddate('Date', _dateController, context)),
         SizedBox(width: size.width * 0.02),
-        Expanded(
-          flex: 4,
-          child: _buildtime('Time', _timeController, context),
-        ),
+        Expanded(flex: 4, child: _buildtime('Time', _timeController, context)),
       ],
     );
   }
 
   Widget _buildDurationSelector() {
-    return TextField(
+    return TextFormField(
+      key: _formKey,
+      controller: _durationController,
       decoration: InputDecoration(
         hintText: 'Enter duration (hours)',
         filled: true,
@@ -278,6 +273,12 @@ class _LuxuryGroundTransportationState extends State<LuxuryGroundTransportation>
         ),
       ),
       keyboardType: TextInputType.number,
+      validator: (value) {
+        if (value == null || value.trim().isEmpty) {
+          return "Please select duration";
+        }
+        return null;
+      },
     );
   }
 
@@ -288,7 +289,12 @@ class _LuxuryGroundTransportationState extends State<LuxuryGroundTransportation>
       height: size.height * 0.07,
       child: ElevatedButton(
         onPressed: () {
-          Navigator.pushNamed(context, '/choosevehicle');
+          if (_pickupLocationController.text.trim().isNotEmpty &&    
+              _dropoffLocationController.text.trim().isNotEmpty &&
+              _dateController.text.trim().isNotEmpty &&
+              _timeController.text.trim().isNotEmpty) {
+            Navigator.pushNamed(context, '/choosevehicle');
+          }
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: primaryColor,
@@ -296,12 +302,43 @@ class _LuxuryGroundTransportationState extends State<LuxuryGroundTransportation>
             borderRadius: BorderRadius.circular(12),
           ),
         ),
-        child: const Text('Continue', style: TextStyle(color: bgColor,fontSize: 16)),
+        child: const Text(
+          'Continue',
+          style: TextStyle(color: bgColor, fontSize: 16),
+        ),
       ),
     );
   }
-
-  Widget _builddate(String hint, TextEditingController controller, BuildContext context) {
+  Widget _buildContinueButtonForHour() {
+    final size = MediaQuery.sizeOf(context);
+    return SizedBox(
+      width: double.infinity,
+      height: size.height * 0.07,
+      child: ElevatedButton(
+        onPressed: () {
+          if (_pickupLocationController.text.trim().isNotEmpty &&
+              _durationController.text.trim().isNotEmpty) {
+            Navigator.pushNamed(context, '/choosevehicle');
+          }
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primaryColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        child: const Text(
+          'Continue',
+          style: TextStyle(color: bgColor, fontSize: 16),
+        ),
+      ),
+    );
+  }
+  Widget _builddate(
+    String hint,
+    TextEditingController controller,
+    BuildContext context,
+  ) {
     return TextFormField(
       controller: controller,
       readOnly: true,
@@ -326,12 +363,11 @@ class _LuxuryGroundTransportationState extends State<LuxuryGroundTransportation>
     );
   }
 
- 
-
-
-
-
-  Widget _buildtime(String hint, TextEditingController controller, BuildContext context) {
+  Widget _buildtime(
+    String hint,
+    TextEditingController controller,
+    BuildContext context,
+  ) {
     return TextFormField(
       controller: controller,
       readOnly: true,
@@ -355,6 +391,4 @@ class _LuxuryGroundTransportationState extends State<LuxuryGroundTransportation>
       ),
     );
   }
-
-
 }
