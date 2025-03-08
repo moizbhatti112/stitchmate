@@ -9,164 +9,32 @@ class WelcomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
+    double responsiveFont(double fontSize) {
+      return size.width * (fontSize / 390); // Adjusting according to iPhone 14 width
+    }
+
     return Scaffold(
       backgroundColor: bgColor,
       body: SingleChildScrollView(
         child: Column(
           children: [
-            Image.asset('assets/images/limo.png'),
+            Image.asset('assets/images/limo.png',height: size.height*0.3,width: double.infinity,fit: BoxFit.cover,),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Luxury Ground Transportation',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontFamily: 'PP Neue Montreal',
-                        fontWeight: FontWeight.w500,
-                      ),
+                  SizedBox(height: size.height*0.04,),
+                  Text(
+                    'Luxury Ground Transportation',
+                    style: TextStyle(
+                      fontSize: responsiveFont(20),
+                      fontFamily: 'PP Neue Montreal',
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                   SizedBox(height: size.height * 0.01),
-                  Row(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start, // Align to the top
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(
-                          top: 3,
-                        ), // Fine-tune vertical alignment
-                        child: SvgPicture.asset('assets/icons/tick.svg'),
-                      ),
-                      SizedBox(width: size.width * 0.04),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Ride in style with our premium chauffeur',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontFamily: 'PP Neue Montreal',
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Text(
-                            'service',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontFamily: 'PP Neue Montreal',
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          SizedBox(height: size.height * 0.01),
-                          Text(
-                            'Our professional chauffeurs provide world-\nclass service, ensuring you travel in comfort\nand elegance.',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontFamily: 'PP Neue Montreal',
-                              fontWeight: FontWeight.w500,
-                              color: grey,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: size.height * 0.02),
-                  Row(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start, // Align to the top
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(
-                          top: 3,
-                        ), // Fine-tune vertical alignment
-                        child: SvgPicture.asset('assets/icons/tick.svg'),
-                      ),
-                      SizedBox(width: size.width * 0.04),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Ride in style with our premium chauffeur',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontFamily: 'PP Neue Montreal',
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Text(
-                            'service',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontFamily: 'PP Neue Montreal',
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          SizedBox(height: size.height * 0.01),
-                          Text(
-                            'Our professional chauffeurs provide world-\nclass service, ensuring you travel in comfort\nand elegance.',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontFamily: 'PP Neue Montreal',
-                              fontWeight: FontWeight.w500,
-                              color: grey,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: size.height * 0.02),
-                  Row(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start, // Align to the top
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(
-                          top: 3,
-                        ), // Fine-tune vertical alignment
-                        child: SvgPicture.asset('assets/icons/tick.svg'),
-                      ),
-                      SizedBox(width: size.width * 0.04),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Ride in style with our premium chauffeur',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontFamily: 'PP Neue Montreal',
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Text(
-                            'service',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontFamily: 'PP Neue Montreal',
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          SizedBox(height: size.height * 0.01),
-                          Text(
-                            'Our professional chauffeurs provide world-\nclass service, ensuring you travel in comfort\nand elegance.',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontFamily: 'PP Neue Montreal',
-                              fontWeight: FontWeight.w500,
-                              color: grey,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                  ...List.generate(3, (index) => _buildFeatureItem(size, responsiveFont)),
                   SizedBox(height: size.height * 0.02),
                 ],
               ),
@@ -181,6 +49,55 @@ class WelcomeScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildFeatureItem(Size size, double Function(double) responsiveFont) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: size.height * 0.02),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 3),
+            child: SvgPicture.asset('assets/icons/tick.svg'),
+          ),
+          SizedBox(width: size.width * 0.04),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Ride in style with our premium chauffeur',
+                  style: TextStyle(
+                    fontSize: responsiveFont(16),
+                    fontFamily: 'PP Neue Montreal',
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  'service',
+                  style: TextStyle(
+                    fontSize: responsiveFont(16),
+                    fontFamily: 'PP Neue Montreal',
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                SizedBox(height: size.height * 0.01),
+                Text(
+                  'Our professional chauffeurs provide world-class service, ensuring you travel in comfort and elegance.',
+                  style: TextStyle(
+                    fontSize: responsiveFont(14),
+                    fontFamily: 'PP Neue Montreal',
+                    fontWeight: FontWeight.w500,
+                    color: grey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
