@@ -40,8 +40,7 @@ dependencies:
   flutter_svg: ^2.0.17
   vector_graphics: ^1.1.18
   font_awesome_flutter: ^10.8.0
-  table_calendar: ^3.2.0
-  intl: ^0.20.2
+  provider: ^6.1.2
 dev_dependencies:
   vector_graphics_compiler: ^1.1.16
   flutter_test:

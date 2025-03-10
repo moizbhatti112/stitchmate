@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:gyde/core/constants/colors.dart';
+import 'package:gyde/features/home/ground_transport/viewmodels/booking_provider.dart';
+import 'package:gyde/features/home/ground_transport/viewmodels/choosevehicle_provider.dart';
+import 'package:provider/provider.dart';
 
 class BookingConfirmation extends StatefulWidget {
   const BookingConfirmation({super.key});
@@ -9,14 +12,10 @@ class BookingConfirmation extends StatefulWidget {
 }
 
 class _BookingConfirmationState extends State<BookingConfirmation> {
-
-
- 
-  @override
-
-
   @override
   Widget build(BuildContext context) {
+    final bookingProvider = Provider.of<BookingProvider>(context);
+    final vehicleprovider = Provider.of<ChooseVehicleProvider>(context);
     final size = MediaQuery.sizeOf(context);
     return Scaffold(
       body: Stack(
@@ -49,12 +48,11 @@ class _BookingConfirmationState extends State<BookingConfirmation> {
                         ),
                       ),
                       SizedBox(height: size.height * 0.015),
-                   
-                      SizedBox(height: size.height * 0.02),
-                      SizedBox(
-                        height: size.height * 1,
-                       
-                      ),
+                      Text("Pickup: ${bookingProvider.pickupLocation}"),
+                      Text("Dropoff: ${bookingProvider.dropoffLocation}"),
+                      Text("Date: ${bookingProvider.date}"),
+                      Text("Time: ${bookingProvider.time}"),
+                      Text("Selected Car: ${vehicleprovider.selectedCar}"),
                     ],
                   ),
                 ),
@@ -65,6 +63,4 @@ class _BookingConfirmationState extends State<BookingConfirmation> {
       ),
     );
   }
-
- 
 }

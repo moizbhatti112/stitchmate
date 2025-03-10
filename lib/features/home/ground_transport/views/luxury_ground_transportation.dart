@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:gyde/core/constants/colors.dart';
+import 'package:gyde/features/home/ground_transport/viewmodels/booking_provider.dart';
 import 'package:gyde/features/home/ground_transport/views/custom_datepicker.dart';
 import 'package:gyde/features/home/ground_transport/views/time_picker.dart';
+import 'package:provider/provider.dart';
 
 class LuxuryGroundTransportation extends StatefulWidget {
   const LuxuryGroundTransportation({super.key});
@@ -14,7 +16,7 @@ class LuxuryGroundTransportation extends StatefulWidget {
 
 class _LuxuryGroundTransportationState extends State<LuxuryGroundTransportation>
     with SingleTickerProviderStateMixin {
-      final _formKey = GlobalKey<FormState>();
+  final _formKey = GlobalKey<FormState>();
   late TabController _tabController;
   final TextEditingController _pickupLocationController =
       TextEditingController();
@@ -289,10 +291,19 @@ class _LuxuryGroundTransportationState extends State<LuxuryGroundTransportation>
       height: size.height * 0.07,
       child: ElevatedButton(
         onPressed: () {
-          if (_pickupLocationController.text.trim().isNotEmpty &&    
+          if (_pickupLocationController.text.trim().isNotEmpty &&
               _dropoffLocationController.text.trim().isNotEmpty &&
               _dateController.text.trim().isNotEmpty &&
               _timeController.text.trim().isNotEmpty) {
+            final bookingProvider = Provider.of<BookingProvider>(
+              context,
+              listen: false,
+            );
+
+            bookingProvider.setPickupLocation(_pickupLocationController.text);
+            bookingProvider.setDropoffLocation(_dropoffLocationController.text);
+            bookingProvider.setDate(_dateController.text);
+            bookingProvider.setTime(_timeController.text);
             Navigator.pushNamed(context, '/choosevehicle');
           }
         },
@@ -309,6 +320,7 @@ class _LuxuryGroundTransportationState extends State<LuxuryGroundTransportation>
       ),
     );
   }
+
   Widget _buildContinueButtonForHour() {
     final size = MediaQuery.sizeOf(context);
     return SizedBox(
@@ -318,6 +330,17 @@ class _LuxuryGroundTransportationState extends State<LuxuryGroundTransportation>
         onPressed: () {
           if (_pickupLocationController.text.trim().isNotEmpty &&
               _durationController.text.trim().isNotEmpty) {
+            final bookingProvider = Provider.of<BookingProvider>(
+              context,
+              listen: false,
+            );
+
+            bookingProvider.setPickupLocation(_pickupLocationController.text);
+            bookingProvider.setDropoffLocation(_dropoffLocationController.text);
+            bookingProvider.setDate(_dateController.text);
+            bookingProvider.setTime(_timeController.text);
+
+            Navigator.pushNamed(context, '/choosevehicle');
             Navigator.pushNamed(context, '/choosevehicle');
           }
         },
@@ -334,6 +357,7 @@ class _LuxuryGroundTransportationState extends State<LuxuryGroundTransportation>
       ),
     );
   }
+
   Widget _builddate(
     String hint,
     TextEditingController controller,

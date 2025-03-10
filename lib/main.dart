@@ -4,18 +4,28 @@ import 'package:gyde/features/authentication/views/add_phone.dart';
 import 'package:gyde/features/authentication/views/email_address.dart';
 import 'package:gyde/features/authentication/views/signup_screen.dart';
 import 'package:gyde/features/authentication/views/welcome.dart';
+import 'package:gyde/features/home/ground_transport/viewmodels/booking_provider.dart';
+import 'package:gyde/features/home/ground_transport/viewmodels/choosevehicle_provider.dart';
 import 'package:gyde/features/home/ground_transport/views/booking_confirmation.dart';
 import 'package:gyde/features/home/ground_transport/views/choose_vehicle.dart';
 import 'package:gyde/features/home/ground_transport/views/luxury_ground_transportation.dart';
 import 'package:gyde/features/home/ground_transport/views/welcome_screen.dart';
 import 'package:gyde/features/home/home_presentation/home_screen.dart';
 import 'package:gyde/features/profile/views/profile_screen.dart';
+import 'package:provider/provider.dart';
 
 void main() {
   // debugPaintSizeEnabled = true;
   WidgetsFlutterBinding.ensureInitialized();
-
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_)=> ChooseVehicleProvider()),
+        ChangeNotifierProvider(create: (_) => BookingProvider()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
