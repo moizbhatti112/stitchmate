@@ -25,7 +25,57 @@ class _HomeScreenState extends State<HomeScreen> {
     GlobalKey<NavigatorState>(),
     GlobalKey<NavigatorState>(),
   ];
-
+  // Cache SVG assets
+  final Map<String, Widget> _svgCache = {};
+  
+  @override
+  void initState() {
+    super.initState();
+    _precacheAssets();
+  }
+  
+  Future<void> _precacheAssets() async {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // Precache SVG icons
+      _cacheSvgAssets([
+        'assets/icons/car.svg',
+        'assets/icons/plane.svg',
+        'assets/icons/glass.svg',
+        'assets/icons/calendar.svg',
+        'assets/icons/planning.svg',
+        'assets/icons/lock.svg',
+      ]);
+      
+      // Precache other images used in the app
+      await _precacheImages();
+    });
+  }
+  
+  void _cacheSvgAssets(List<String> assets) {
+    for (final asset in assets) {
+      if (!_svgCache.containsKey(asset)) {
+        _svgCache[asset] = SvgPicture.asset(
+          asset,
+          height: 32,
+          width: 32,
+        );
+      }
+    }
+  }
+  
+  Future<void> _precacheImages() async {
+    final imagesToPreload = [
+      'assets/images/carimage.png',
+      'assets/images/Gyde Logo.png',
+      'assets/icons/apple.png',
+      'assets/icons/google.png',
+      'assets/icons/fb.png',
+    ];
+    
+    for (final asset in imagesToPreload) {
+      await precacheImage(AssetImage(asset), context);
+    }
+  }
   // Handle tap events on the bottom navigation bar
   void _onItemTapped(int index) {
     if (_selectedIndex == index) {
