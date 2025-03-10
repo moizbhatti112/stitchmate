@@ -4,6 +4,7 @@ import 'package:gyde/features/authentication/views/add_phone.dart';
 import 'package:gyde/features/authentication/views/email_address.dart';
 import 'package:gyde/features/authentication/views/signup_screen.dart';
 import 'package:gyde/features/authentication/views/welcome.dart';
+import 'package:gyde/features/home/ground_transport/views/booking_confirmation.dart';
 import 'package:gyde/features/home/ground_transport/views/choose_vehicle.dart';
 import 'package:gyde/features/home/ground_transport/views/luxury_ground_transportation.dart';
 import 'package:gyde/features/home/ground_transport/views/welcome_screen.dart';
@@ -38,6 +39,7 @@ class MyApp extends StatelessWidget {
         '/luxurytransport': (context) => const LuxuryGroundTransportation(),
         '/luxurywelcome': (context) => const WelcomeScreen(),
         '/choosevehicle': (context) => const ChooseVehicle(),
+        '/bookingconfirmation':(context)=>const BookingConfirmation()
       },
     );
   }

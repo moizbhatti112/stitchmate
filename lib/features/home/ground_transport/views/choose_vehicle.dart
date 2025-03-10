@@ -24,7 +24,6 @@ class _ChooseVehicleState extends State<ChooseVehicle> {
       price: '215.00',
       title: 'Electric Class',
     ),
-  
   ];
 
   // Selected car type index
@@ -70,10 +69,8 @@ class _ChooseVehicleState extends State<ChooseVehicle> {
         child: Column(
           children: [
             // Horizontal scrollable car type list
-          
-            
             SizedBox(height: size.height * 0.05),
-            
+
             // Selected car details
             Text(
               carTypes[selectedCarIndex].title,
@@ -181,8 +178,8 @@ class _ChooseVehicleState extends State<ChooseVehicle> {
                 ],
               ),
             ),
-              Container(
-              height: size.height*0.2,
+            Container(
+              height: size.height * 0.2,
               margin: const EdgeInsets.only(top: 20),
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
@@ -191,7 +188,7 @@ class _ChooseVehicleState extends State<ChooseVehicle> {
                 itemBuilder: (context, index) {
                   final carType = carTypes[index];
                   final isSelected = selectedCarIndex == index;
-                  
+
                   return GestureDetector(
                     onTap: () {
                       setState(() {
@@ -199,31 +196,32 @@ class _ChooseVehicleState extends State<ChooseVehicle> {
                       });
                     },
                     child: Container(
-                      width: size.width*0.5,
+                      width: size.width * 0.5,
                       margin: const EdgeInsets.only(right: 12),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: isSelected ? secondaryColor : phonefieldColor,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: isSelected ? primaryColor : Colors.grey.shade300,
+                          color:
+                              isSelected ? primaryColor : Colors.grey.shade300,
                           width: 1.5,
                         ),
                       ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Image.asset(carType.path,),
+                          Image.asset(carType.path),
                           Text(
                             carType.title,
                             style: TextStyle(
                               fontSize: 16,
                               fontFamily: 'PPNeueMontreal',
                               fontWeight: FontWeight.w500,
-                              color:  Colors.black,
+                              color: Colors.black,
                             ),
                           ),
-                           SizedBox(height:size.height*0.01),
+                          SizedBox(height: size.height * 0.01),
                           Text(
                             '${carType.price} USD',
                             style: TextStyle(
@@ -233,7 +231,6 @@ class _ChooseVehicleState extends State<ChooseVehicle> {
                               color: grey,
                             ),
                           ),
-                         
                         ],
                       ),
                     ),
@@ -241,13 +238,16 @@ class _ChooseVehicleState extends State<ChooseVehicle> {
                 },
               ),
             ),
-            SizedBox(height: size.height*0.015,),
-            MyButton(text: 'Select', onPressed: (){})
+            SizedBox(height: size.height * 0.015),
+            MyButton(
+              text: 'Select',
+              onPressed: () {
+                Navigator.pushNamed(context, '/bookingconfirmation');
+              },
+            ),
           ],
         ),
       ),
-
     );
-    
   }
 }
