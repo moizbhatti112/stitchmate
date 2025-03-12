@@ -38,7 +38,7 @@ class MyApp extends StatelessWidget {
 
       title: 'Flutter Demo',
       theme: ThemeData(fontFamily: 'HelveticaNeueMedium'),
-      home: const HomeScreen(),
+      home: const SignupScreen(),
       routes: {
         '/signup': (context) => const SignupScreen(),
         '/addphone': (context) => const AddPhone(),

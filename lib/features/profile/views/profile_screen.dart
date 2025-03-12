@@ -63,6 +63,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
+        backgroundColor: bgColor,
         body: OrientationBuilder(
           builder: (context, orientation) {
             final Size size = MediaQuery.sizeOf(context);

@@ -51,7 +51,7 @@ class _LuxuryGroundTransportationState extends State<LuxuryGroundTransportation>
             child: Image.asset('assets/images/map.png', fit: BoxFit.cover),
           ),
           DraggableScrollableSheet(
-            initialChildSize: 0.4,
+            initialChildSize: 0.65,
             minChildSize: 0.4,
             maxChildSize: 0.8,
             builder: (context, scrollController) {
