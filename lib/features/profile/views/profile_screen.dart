@@ -9,7 +9,7 @@ class ProfileProvider extends ChangeNotifier {
   final TextEditingController fnameController = TextEditingController();
   final TextEditingController lnameController = TextEditingController();
   final TextEditingController cnameController = TextEditingController();
-  
+
   File? _image;
   bool _isButtonEnabled = false;
 
@@ -40,7 +40,9 @@ class ProfileProvider extends ChangeNotifier {
   }
 
   Future<void> pickImage() async {
-    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+    final pickedFile = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+    );
     if (pickedFile != null) {
       _image = File(pickedFile.path);
       checkFields();
@@ -66,16 +68,29 @@ class ProfileScreen extends StatelessWidget {
                   children: [
                     Stack(
                       children: [
-                        Image.asset('assets/images/profilebg.png', fit: BoxFit.cover, width: double.infinity),
+                        Image.asset(
+                          'assets/images/profilebg.png',
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                        ),
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
                           child: Row(
                             children: [
                               IconButton(
                                 onPressed: () => Navigator.pop(context),
-                                icon: Icon(Icons.arrow_back_ios, color: bgColor),
+                                icon: Icon(
+                                  Icons.arrow_back_ios,
+                                  color: bgColor,
+                                ),
                               ),
-                              Text('Profile', style: TextStyle(color: bgColor, fontSize: 20)),
+                              Text(
+                                'Profile',
+                                style: TextStyle(color: bgColor, fontSize: 20),
+                              ),
                               Spacer(),
                               IconButton(
                                 onPressed: () {},
@@ -92,8 +107,17 @@ class ProfileScreen extends StatelessWidget {
                                 CircleAvatar(
                                   radius: 50,
                                   backgroundColor: bgColor,
-                                  backgroundImage: provider.image != null ? FileImage(provider.image!) : null,
-                                  child: provider.image == null ? Image.asset('assets/icons/person.png', color: black) : null,
+                                  backgroundImage:
+                                      provider.image != null
+                                          ? FileImage(provider.image!)
+                                          : null,
+                                  child:
+                                      provider.image == null
+                                          ? Image.asset(
+                                            'assets/icons/person.png',
+                                            color: black,
+                                          )
+                                          : null,
                                 ),
                                 Positioned(
                                   bottom: 0,
@@ -104,8 +128,13 @@ class ProfileScreen extends StatelessWidget {
                                       radius: 18,
                                       backgroundColor: bgColor,
                                       child: Icon(
-                                        provider.image == null ? Icons.camera_alt : Icons.edit,
-                                        color: provider.image == null ? nexttext : primaryColor,
+                                        provider.image == null
+                                            ? Icons.camera_alt
+                                            : Icons.edit,
+                                        color:
+                                            provider.image == null
+                                                ? nexttext
+                                                : primaryColor,
                                         size: 18,
                                       ),
                                     ),
@@ -122,39 +151,82 @@ class ProfileScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Your Profile', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600)),
-                          Text('Provide your basic details for a personalized experience.', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: grey)),
+                          Text(
+                            'Your Profile',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text(
+                            'Provide your basic details for a personalized experience.',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: grey,
+                            ),
+                          ),
                           SizedBox(height: 30),
-                          buildTextField('First Name', provider.fnameController, 'Your first name'),
+                          buildTextField(
+                            'First Name',
+                            provider.fnameController,
+                            'Your first name',
+                          ),
                           SizedBox(height: 10),
-                          buildTextField('Last Name', provider.lnameController, 'Your last name'),
+                          buildTextField(
+                            'Last Name',
+                            provider.lnameController,
+                            'Your last name',
+                          ),
                           SizedBox(height: 10),
-                          buildTextField('Company Name', provider.cnameController, 'Your company name'),
+                          buildTextField(
+                            'Company Name',
+                            provider.cnameController,
+                            'Your company name',
+                          ),
                           SizedBox(height: size.height * 0.08),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 5),
                             child: SizedBox(
                               height: size.height * 0.07,
                               width: double.infinity,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: provider.isButtonEnabled ? primaryColor : nextbg,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                ),
-                                onPressed: provider.isButtonEnabled
-                                    ? () => Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => AiWelcome(name: provider.fnameController.text),
-                                          ),
-                                        )
-                                    : null,
-                                child: Text(
-                                  'Next',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                    color: provider.isButtonEnabled ? Colors.white : nexttext,
+                              child: Padding(
+                                padding:  EdgeInsets.only(bottom: size.height*0.01),
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor:
+                                        provider.isButtonEnabled
+                                            ? primaryColor
+                                            : nextbg,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                  ),
+                                  onPressed:
+                                      provider.isButtonEnabled
+                                          ? () => Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder:
+                                                  (context) => AiWelcome(
+                                                    name:
+                                                        provider
+                                                            .fnameController
+                                                            .text,
+                                                  ),
+                                            ),
+                                          )
+                                          : null,
+                                  child: Text(
+                                    'Next',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                      color:
+                                          provider.isButtonEnabled
+                                              ? Colors.white
+                                              : nexttext,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -173,11 +245,22 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget buildTextField(String label, TextEditingController controller, String hint) {
+  Widget buildTextField(
+    String label,
+    TextEditingController controller,
+    String hint,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: black)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: black,
+          ),
+        ),
         SizedBox(height: 10),
         TextFormField(
           controller: controller,
@@ -187,8 +270,15 @@ class ProfileScreen extends StatelessWidget {
             filled: true,
             fillColor: phonefieldColor,
             hintText: hint,
-            hintStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: phonefieldtext),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+            hintStyle: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: phonefieldtext,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
             counterText: "",
           ),
         ),

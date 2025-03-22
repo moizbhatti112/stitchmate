@@ -24,12 +24,12 @@ class _MyButtonState extends State<MyButton> {
     // ✅ Button height adjust according to orientation
     double buttonHeight = orientation == Orientation.portrait
         ? size.height * 0.065
-        : size.height * 0.15;
+        : size.height * 0.08;
 
     // ✅ Font size adjust according to orientation
     double fontSize = orientation == Orientation.portrait
         ? size.height * 0.02  // Smaller in portrait
-        : size.height * 0.04;   // Bigger in landscape
+        : size.height * 0.03;   // Bigger in landscape
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 15),

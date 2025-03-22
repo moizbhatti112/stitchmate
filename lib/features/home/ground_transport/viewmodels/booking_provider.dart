@@ -1,34 +1,55 @@
 import 'package:flutter/material.dart';
 
 class BookingProvider extends ChangeNotifier {
-  String? pickupLocation;
-  String? dropoffLocation;
-  String? date;
-  String? time;
-  String? selectedCar;
+  String _pickupLocation = '';
+  String _dropoffLocation = '';
+  String _date = '';
+  String _time = '';
+  String _duration = '';
 
+  // Getters
+  String get pickupLocation => _pickupLocation;
+  String get dropoffLocation => _dropoffLocation;
+  String get date => _date;
+  String get time => _time;
+  String get duration => _duration;
+  
+  // Setters
   void setPickupLocation(String location) {
-    pickupLocation = location;
+    _pickupLocation = location;
     notifyListeners();
   }
-
+  
   void setDropoffLocation(String location) {
-    dropoffLocation = location;
+    _dropoffLocation = location;
     notifyListeners();
   }
-
-  void setDate(String selectedDate) {
-    date = selectedDate;
+  
+  void setDate(String date) {
+    _date = date;
     notifyListeners();
   }
-
-  void setTime(String selectedTime) {
-    time = selectedTime;
+  
+  void setTime(String time) {
+    _time = time;
     notifyListeners();
   }
-
-  void setSelectedCar(String car) {
-    selectedCar = car;
+  
+  void setDuration(String duration) {
+    _duration = duration;
+    notifyListeners();
+  }
+  
+  // Helper to check if this is an hourly booking
+  bool get isHourlyBooking => _duration.isNotEmpty;
+  
+  // Clear all data
+  void clearBookingData() {
+    _pickupLocation = '';
+    _dropoffLocation = '';
+    _date = '';
+    _time = '';
+    _duration = '';
     notifyListeners();
   }
 }

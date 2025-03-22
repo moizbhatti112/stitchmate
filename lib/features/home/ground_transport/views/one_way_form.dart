@@ -1,0 +1,128 @@
+import 'package:flutter/material.dart';
+import 'package:gyde/core/constants/colors.dart';
+import 'package:gyde/features/home/ground_transport/viewmodels/booking_provider.dart';
+import 'package:gyde/features/home/ground_transport/views/location_input.dart';
+import 'package:gyde/features/home/ground_transport/views/date_time_selector.dart';
+import 'package:provider/provider.dart';
+
+class OneWayForm extends StatefulWidget {
+  final VoidCallback onFormFieldTap;
+  
+  const OneWayForm({super.key, required this.onFormFieldTap});
+
+  @override
+  State<OneWayForm> createState() => _OneWayFormState();
+}
+
+class _OneWayFormState extends State<OneWayForm> {
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _pickupLocationController = TextEditingController();
+  final TextEditingController _dropoffLocationController = TextEditingController();
+  final TextEditingController _dateController = TextEditingController();
+  final TextEditingController _timeController = TextEditingController();
+
+  @override
+  void dispose() {
+    _pickupLocationController.dispose();
+    _dropoffLocationController.dispose();
+    _dateController.dispose();
+    _timeController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    
+    return Form(
+      key: _formKey,
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Pickup',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                fontFamily: "HelveticaNeueMedium",
+                color: black,
+              ),
+            ),
+            SizedBox(height: size.height * 0.015),
+            LocationInput(
+              controller: _pickupLocationController,
+              hintText: 'Pickup location',
+              iconPath: 'assets/icons/pickup.svg',
+              onTap: widget.onFormFieldTap,
+              isDropoff: false,
+            ),
+            SizedBox(height: size.height * 0.015),
+            Text(
+              'Drop-off',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                fontFamily: "HelveticaNeueMedium",
+                color: black,
+              ),
+            ),
+            SizedBox(height: size.height * 0.015),
+            LocationInput(
+              controller: _dropoffLocationController,
+              hintText: 'Drop-off location',
+              iconPath: 'assets/icons/drop_off.svg',
+              onTap: widget.onFormFieldTap,
+              isDropoff: true,
+            ),
+            SizedBox(height: size.height * 0.03),
+            DateTimeSelector(
+              dateController: _dateController,
+              timeController: _timeController,
+            ),
+            SizedBox(height: size.height * 0.02),
+            Divider(color: grey),
+            SizedBox(height: size.height * 0.02),
+            _buildContinueButton(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContinueButton() {
+    final size = MediaQuery.of(context).size;
+    
+    return SizedBox(
+      width: double.infinity,
+      height: size.height * 0.07,
+      child: ElevatedButton(
+        onPressed: () {
+          if (_formKey.currentState?.validate() ?? false) {
+            final bookingProvider = Provider.of<BookingProvider>(
+              context,
+              listen: false,
+            );
+
+            bookingProvider.setPickupLocation(_pickupLocationController.text);
+            bookingProvider.setDropoffLocation(_dropoffLocationController.text);
+            bookingProvider.setDate(_dateController.text);
+            bookingProvider.setTime(_timeController.text);
+
+            Navigator.pushNamed(context, '/choosevehicle');
+          }
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primaryColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        child: const Text(
+          'Continue',
+          style: TextStyle(color: bgColor, fontSize: 16),
+        ),
+      ),
+    );
+  }
+}

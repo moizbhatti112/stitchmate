@@ -28,7 +28,7 @@ class _SocialmediaButtonState extends State<SocialmediaButton> {
 
     double buttonHeight = orientation == Orientation.portrait
         ? size.height * 0.067
-        : size.height * 0.2;
+        : size.height * 0.16;
 
     double iconSize = orientation == Orientation.portrait
         ? size.width * 0.08

@@ -124,7 +124,7 @@ class _BookingConfirmationState extends State<BookingConfirmation> {
                                   SizedBox(width: size.width * 0.05),
                                   Expanded(
                                     child: Text(
-                                      "${bookingProvider.pickupLocation}",
+                                      bookingProvider.pickupLocation,
                                       style: TextStyle(
                                         fontSize: 15,
                                         fontFamily: "HelveticaNeueMedium",
@@ -158,7 +158,7 @@ class _BookingConfirmationState extends State<BookingConfirmation> {
                                   SizedBox(width: size.width * 0.05),
                                   Expanded(
                                     child: Text(
-                                      "${bookingProvider.dropoffLocation}",
+                                      bookingProvider.dropoffLocation,
                                       style: TextStyle(
                                         fontSize: 15,
                                         fontFamily: "HelveticaNeueMedium",

@@ -6,6 +6,7 @@ import 'package:gyde/features/authentication/views/signup_screen.dart';
 import 'package:gyde/features/authentication/views/welcome.dart';
 import 'package:gyde/features/home/ground_transport/viewmodels/booking_provider.dart';
 import 'package:gyde/features/home/ground_transport/viewmodels/choosevehicle_provider.dart';
+import 'package:gyde/features/home/ground_transport/viewmodels/map_provider.dart';
 import 'package:gyde/features/home/ground_transport/views/booking_confirmation.dart';
 import 'package:gyde/features/home/ground_transport/views/choose_vehicle.dart';
 import 'package:gyde/features/home/ground_transport/views/luxury_ground_transportation.dart';
@@ -22,6 +23,7 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (_)=> ChooseVehicleProvider()),
         ChangeNotifierProvider(create: (_) => BookingProvider()),
+        ChangeNotifierProvider(create: (_) => MapProvider()),
       ],
       child: const MyApp(),
     ),
@@ -38,7 +40,8 @@ class MyApp extends StatelessWidget {
 
       title: 'Flutter Demo',
       theme: ThemeData(fontFamily: 'HelveticaNeueMedium'),
-      home: const SignupScreen(),
+      // home: const LuxuryGroundTransportation(),
+       home: const WelcomeScreen(),
       routes: {
         '/signup': (context) => const SignupScreen(),
         '/addphone': (context) => const AddPhone(),
