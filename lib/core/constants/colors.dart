@@ -15,3 +15,4 @@ const Color lightgrey = Color(0xFF9B9B9B);
 const Color circlemenusbg = Color(0xFFFDFDFD);
 const Color circlemenusborder = Color(0xFFF2F2F2);
 const Color transparent = Colors.transparent;
+const Color white = Colors.white;

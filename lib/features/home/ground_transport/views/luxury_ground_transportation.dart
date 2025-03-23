@@ -43,6 +43,12 @@ class _LuxuryGroundTransportationState
     });
   }
 
+  void expandSheet() {
+    setState(() {
+      isTapped = true;
+    });
+  }
+
   @override
   void dispose() {
     _locationService.dispose();
@@ -51,7 +57,6 @@ class _LuxuryGroundTransportationState
 
   // Create shimmer for map area
   Widget _buildMapShimmerEffect() {
-  
     return Shimmer.fromColors(
       baseColor: Colors.grey[300]!,
       highlightColor: Colors.grey[100]!,
@@ -125,7 +130,7 @@ class _LuxuryGroundTransportationState
                 height: 5,
                 margin: EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: grey,
                   borderRadius: BorderRadius.circular(2.5),
                 ),
               ),
@@ -136,7 +141,7 @@ class _LuxuryGroundTransportationState
               height: 50,
               margin: EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: grey,
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
@@ -145,7 +150,7 @@ class _LuxuryGroundTransportationState
               height: 50,
               margin: EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: grey,
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
@@ -157,7 +162,7 @@ class _LuxuryGroundTransportationState
                     height: 50,
                     margin: EdgeInsets.only(right: 8),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: grey,
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
@@ -166,7 +171,7 @@ class _LuxuryGroundTransportationState
                   child: Container(
                     height: 50,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: grey,
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
@@ -179,7 +184,7 @@ class _LuxuryGroundTransportationState
             Container(
               height: 50,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: grey,
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
@@ -192,6 +197,7 @@ class _LuxuryGroundTransportationState
   @override
   Widget build(BuildContext context) {
     // Single unified loading state for entire screen
+    final size = MediaQuery.sizeOf(context);
     if (_isLoading) {
       return Scaffold(
         body: Stack(
@@ -219,6 +225,7 @@ class _LuxuryGroundTransportationState
         children: [
           // Map
           Positioned.fill(
+            bottom: size.height*0.1,
             child: GoogleMap(
               myLocationEnabled: true,
               myLocationButtonEnabled: true,

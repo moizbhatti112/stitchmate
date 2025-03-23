@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:gyde/core/constants/colors.dart';
 import 'package:gyde/features/home/ground_transport/viewmodels/booking_provider.dart';
 import 'package:gyde/features/home/ground_transport/views/location_input.dart';
-import 'package:gyde/features/home/ground_transport/views/date_time_selector.dart';
 import 'package:provider/provider.dart';
 
 class HourlyForm extends StatefulWidget {
@@ -39,15 +38,7 @@ class _HourlyFormState extends State<HourlyForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Pickup',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w500,
-              fontFamily: "HelveticaNeueMedium",
-              color: black,
-            ),
-          ),
+          
           SizedBox(height: size.height * 0.015),
           LocationInput(
             controller: _pickupLocationController,
@@ -56,11 +47,7 @@ class _HourlyFormState extends State<HourlyForm> {
             onTap: widget.onFormFieldTap,
             isDropoff: false,
           ),
-          SizedBox(height: size.height * 0.03),
-          DateTimeSelector(
-            dateController: _dateController,
-            timeController: _timeController,
-          ),
+        
           SizedBox(height: size.height * 0.03),
           Text(
             'Duration',

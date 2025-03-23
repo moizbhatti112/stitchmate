@@ -24,5 +24,6 @@ class PlaceAutoCompleteResponse {
     final parsed = jsonDecode(responseBody);
     return PlaceAutoCompleteResponse.fromJson(parsed);
   }
+  
 }
 
