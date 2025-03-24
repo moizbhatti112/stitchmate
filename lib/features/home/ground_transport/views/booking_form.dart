@@ -42,7 +42,7 @@ class _BookingFormState extends State<BookingForm> with SingleTickerProviderStat
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Book a rides',
+                'Book a ride',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
