@@ -6,13 +6,67 @@ import 'package:flutter/services.dart';
 
 class LocationService {
   BitmapDescriptor _markerIcon = BitmapDescriptor.defaultMarker;
-
+ BitmapDescriptor _dropoffMarkerIcon = BitmapDescriptor.defaultMarker;
   // Add this method to set the custom marker icon
   void setCustomMarkerIcon(BitmapDescriptor icon) {
     _markerIcon = icon;
     // Re-create markers with the new icon
     updateMarkers();
   }
+  void addDropoffMarker(LatLng location, BitmapDescriptor icon) {
+    // Remove any existing dropoff marker
+    _markers.removeWhere((marker) => marker.markerId.value == "dropoff_location");
+    
+    _dropoffMarkerIcon = icon;
+    
+    _markers.add(
+      Marker(
+        markerId: const MarkerId("dropoff_location"),
+        position: location,
+        icon: _dropoffMarkerIcon,
+        infoWindow: const InfoWindow(title: "Drop-off Location"),
+      ),
+    );
+
+    // Adjust camera to show both markers if possible
+    if (_mapInitialized) {
+      _fitMarkersBounds();
+    }
+  }
+   // Method to fit map bounds to show all markers
+  void _fitMarkersBounds() {
+    if (_markers.length > 1) {
+      final bounds = _calculateMarkerBounds();
+      _mapController.animateCamera(
+        CameraUpdate.newLatLngBounds(bounds, 100),
+      );
+    }
+  }
+   // Calculate bounds that include all markers
+  LatLngBounds _calculateMarkerBounds() {
+    double minLat = double.infinity;
+    double maxLat = -double.infinity;
+    double minLng = double.infinity;
+    double maxLng = -double.infinity;
+
+    for (var marker in _markers) {
+      final lat = marker.position.latitude;
+      final lng = marker.position.longitude;
+
+      minLat = min(minLat, lat);
+      maxLat = max(maxLat, lat);
+      minLng = min(minLng, lng);
+      maxLng = max(maxLng, lng);
+    }
+
+    return LatLngBounds(
+      southwest: LatLng(minLat, minLng),
+      northeast: LatLng(maxLat, maxLng),
+    );
+  }
+   // Helper methods for min and max
+  double min(double a, double b) => a < b ? a : b;
+  double max(double a, double b) => a > b ? a : b;
   
   late GoogleMapController _mapController;
   final Set<Marker> _markers = {};

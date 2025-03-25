@@ -198,7 +198,9 @@ class _LocationInputState extends State<LocationInput> {
     Uri uri = Uri.https(
       "maps.googleapis.com",
       '/maps/api/place/autocomplete/json',
-      {"input": query, "key": googleApiKey, "components": "country:pk"},
+      {"input": query, "key": googleApiKey, 
+      // "components": "country:pk"
+      },
     );
 
     String? response = await NetworkUtil.fetchUrl(uri);

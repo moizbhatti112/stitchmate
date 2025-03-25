@@ -17,6 +17,7 @@ class LuxuryGroundTransportation extends StatefulWidget {
 class LuxuryGroundTransportationState
     extends State<LuxuryGroundTransportation> {
   BitmapDescriptor markerIcon = BitmapDescriptor.defaultMarker;
+   BitmapDescriptor dropoffMarkerIcon = BitmapDescriptor.defaultMarker;
   final LocationService _locationService = LocationService();
   bool isTapped = false;
   bool _isLoading = true; 
@@ -27,6 +28,12 @@ class LuxuryGroundTransportationState
       isLocationValid = true;
       // Update map to the selected location
       _locationService.updateSelectedLocation(newLocation);
+    });
+  }
+   void onDropoffLocationSelected(LatLng newLocation) {
+    setState(() {
+      // Add a second marker for drop-off location
+      _locationService.addDropoffMarker(newLocation, dropoffMarkerIcon);
     });
   }
   @override
@@ -43,6 +50,14 @@ class LuxuryGroundTransportationState
          
       await _locationService.initialize();
 
+    BitmapDescriptor.asset(
+        ImageConfiguration(size: Size(40, 40)),
+        "assets/icons/dropg.png", // You'll need to add this icon
+      ).then((icon) {
+        setState(() {
+          dropoffMarkerIcon = icon;
+        });
+      });
       // Add a consistent delay after initialization to ensure map has time to load
       Future.delayed(const Duration(milliseconds: 1500), () {
         if (mounted) {
@@ -56,8 +71,8 @@ class LuxuryGroundTransportationState
 
   void addCustomIcon() {
     BitmapDescriptor.asset(
-      ImageConfiguration(size: Size(40, 40)),
-      "assets/icons/pick_up.png",
+      ImageConfiguration(size: Size(50, 50)),
+      "assets/icons/pickg.png",
     ).then((icon) {
       setState(() {
         markerIcon = icon;
@@ -287,6 +302,7 @@ void onPickupLocationSelected(LatLng newLocation) {
                     });
                   },
                 onPickupLocationSelected: onSuggestionSelected, 
+                onDropoffLocationSelected: onDropoffLocationSelected,
                 ),
               );
             },
