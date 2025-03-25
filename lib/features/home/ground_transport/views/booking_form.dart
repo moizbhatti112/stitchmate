@@ -2,15 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:gyde/core/constants/colors.dart';
 import 'package:gyde/features/home/ground_transport/views/one_way_form.dart';
 import 'package:gyde/features/home/ground_transport/views/hourly_form.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class BookingForm extends StatefulWidget {
   final ScrollController scrollController;
   final VoidCallback onFormFieldTap;
-
+  final Function(LatLng)? onPickupLocationSelected;
+   final Function(LatLng)? onDropoffLocationSelected;
   const BookingForm({
     super.key, 
     required this.scrollController, 
-    required this.onFormFieldTap
+    required this.onFormFieldTap,
+    this.onPickupLocationSelected,
+    this.onDropoffLocationSelected
   });
 
   @override
@@ -42,7 +46,7 @@ class _BookingFormState extends State<BookingForm> with SingleTickerProviderStat
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Book a ride bhai sahb',
+                'Book a ride',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -58,8 +62,14 @@ class _BookingFormState extends State<BookingForm> with SingleTickerProviderStat
                   controller: _tabController,
                   physics: const NeverScrollableScrollPhysics(),
                   children: [
-                    OneWayForm(onFormFieldTap: widget.onFormFieldTap),
-                    HourlyForm(onFormFieldTap: widget.onFormFieldTap),
+                    OneWayForm(
+                      onFormFieldTap: widget.onFormFieldTap,
+                      onPickupLocationSelected: widget.onPickupLocationSelected,
+                    ),
+                    HourlyForm(
+                      onFormFieldTap: widget.onFormFieldTap,
+                      onPickupLocationSelected: widget.onDropoffLocationSelected,
+                    ),
                   ],
                 ),
               ),

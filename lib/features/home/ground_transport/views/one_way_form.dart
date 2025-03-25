@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:gyde/core/constants/colors.dart';
 import 'package:gyde/features/home/ground_transport/viewmodels/booking_provider.dart';
 import 'package:gyde/features/home/ground_transport/views/location_input.dart';
@@ -7,8 +8,14 @@ import 'package:provider/provider.dart';
 
 class OneWayForm extends StatefulWidget {
   final VoidCallback onFormFieldTap;
-  
-  const OneWayForm({super.key, required this.onFormFieldTap});
+  final Function(LatLng)? onPickupLocationSelected;
+   final Function(LatLng)? onDropoffLocationSelected;
+  const OneWayForm({
+    super.key, 
+    required this.onFormFieldTap, 
+    this.onPickupLocationSelected,
+    this.onDropoffLocationSelected
+  });
 
   @override
   State<OneWayForm> createState() => _OneWayFormState();
@@ -32,7 +39,7 @@ class _OneWayFormState extends State<OneWayForm> {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
+   final size = MediaQuery.of(context).size;
     
     return Form(
       key: _formKey,
@@ -56,6 +63,7 @@ class _OneWayFormState extends State<OneWayForm> {
               iconPath: 'assets/icons/pickup.svg',
               onTap: widget.onFormFieldTap,
               isDropoff: false,
+              onLocationSelected: widget.onPickupLocationSelected,
             ),
             SizedBox(height: size.height * 0.015),
             Text(
@@ -74,6 +82,7 @@ class _OneWayFormState extends State<OneWayForm> {
               iconPath: 'assets/icons/drop_off.svg',
               onTap: widget.onFormFieldTap,
               isDropoff: true,
+              onLocationSelected: widget.onDropoffLocationSelected,
             ),
             SizedBox(height: size.height * 0.03),
             DateTimeSelector(

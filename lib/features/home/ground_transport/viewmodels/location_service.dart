@@ -1,12 +1,19 @@
-
-
 import 'package:flutter/material.dart';
+
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter/services.dart';
 
-
 class LocationService {
+  BitmapDescriptor _markerIcon = BitmapDescriptor.defaultMarker;
+
+  // Add this method to set the custom marker icon
+  void setCustomMarkerIcon(BitmapDescriptor icon) {
+    _markerIcon = icon;
+    // Re-create markers with the new icon
+    updateMarkers();
+  }
+  
   late GoogleMapController _mapController;
   final Set<Marker> _markers = {};
   bool _isLoading = true;
@@ -40,7 +47,7 @@ class LocationService {
   void onMapCreated(GoogleMapController controller) {
     _mapController = controller;
     _mapInitialized = true;
-    
+
     Future.delayed(const Duration(milliseconds: 300), () {
       zoomToCurrentLocation();
     });
@@ -130,18 +137,36 @@ class LocationService {
   }
 
   // 🔥 Function to Update Markers
-  void updateMarkers() {
+  void updateMarkers() async {
     _markers.clear();
+
     _markers.add(
       Marker(
         markerId: const MarkerId("current_location"),
         position: _currentPosition,
+        icon: _markerIcon,
         infoWindow: const InfoWindow(title: "Your Location"),
       ),
     );
-
-    debugPrint("Marker updated at: $_currentPosition");
   }
-
+  
+  // New method to update map with selected location
+  void updateSelectedLocation(LatLng location) {
+    _currentPosition = location;
+    updateMarkers();
+    
+    if (_mapInitialized) {
+      _mapController.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target: location,
+            zoom: 15,
+            tilt: 0,
+            bearing: 0,
+          ),
+        ),
+      );
+    }
+  }
 
 }

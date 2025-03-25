@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:gyde/core/constants/colors.dart';
 import 'package:gyde/features/home/ground_transport/viewmodels/booking_provider.dart';
 import 'package:gyde/features/home/ground_transport/views/location_input.dart';
+import 'package:gyde/features/home/ground_transport/views/date_time_selector.dart';
 import 'package:provider/provider.dart';
 
 class HourlyForm extends StatefulWidget {
   final VoidCallback onFormFieldTap;
+  final Function(LatLng)? onPickupLocationSelected;
   
-  const HourlyForm({super.key, required this.onFormFieldTap});
+  const HourlyForm({
+    super.key, 
+    required this.onFormFieldTap,
+    this.onPickupLocationSelected
+  });
 
   @override
   State<HourlyForm> createState() => _HourlyFormState();
@@ -35,36 +42,51 @@ class _HourlyFormState extends State<HourlyForm> {
     
     return Form(
       key: _formKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          
-          SizedBox(height: size.height * 0.015),
-          LocationInput(
-            controller: _pickupLocationController,
-            hintText: 'Pickup location',
-            iconPath: 'assets/icons/pickup.svg',
-            onTap: widget.onFormFieldTap,
-            isDropoff: false,
-          ),
-        
-          SizedBox(height: size.height * 0.03),
-          Text(
-            'Duration',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w500,
-              fontFamily: "HelveticaNeueMedium",
-              color: black,
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Pickup',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                fontFamily: "HelveticaNeueMedium",
+                color: black,
+              ),
             ),
-          ),
-          SizedBox(height: size.height * 0.015),
-          _buildDurationSelector(),
-          SizedBox(height: size.height * 0.06),
-          Divider(color: grey),
-          SizedBox(height: size.height * 0.02),
-          _buildContinueButton(),
-        ],
+            SizedBox(height: size.height * 0.015),
+            LocationInput(
+              controller: _pickupLocationController,
+              hintText: 'Pickup location',
+              iconPath: 'assets/icons/pickup.svg',
+              onTap: widget.onFormFieldTap,
+              isDropoff: false,
+              onLocationSelected: widget.onPickupLocationSelected,
+            ),
+            SizedBox(height: size.height * 0.03),
+            DateTimeSelector(
+              dateController: _dateController,
+              timeController: _timeController,
+            ),
+            SizedBox(height: size.height * 0.03),
+            Text(
+              'Duration',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                fontFamily: "HelveticaNeueMedium",
+                color: black,
+              ),
+            ),
+            SizedBox(height: size.height * 0.015),
+            _buildDurationSelector(),
+            SizedBox(height: size.height * 0.06),
+            Divider(color: grey),
+            SizedBox(height: size.height * 0.02),
+            _buildContinueButton(),
+          ],
+        ),
       ),
     );
   }

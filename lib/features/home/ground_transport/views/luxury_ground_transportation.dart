@@ -11,25 +11,36 @@ class LuxuryGroundTransportation extends StatefulWidget {
 
   @override
   State<LuxuryGroundTransportation> createState() =>
-      _LuxuryGroundTransportationState();
+      LuxuryGroundTransportationState();
 }
 
-class _LuxuryGroundTransportationState
+class LuxuryGroundTransportationState
     extends State<LuxuryGroundTransportation> {
+  BitmapDescriptor markerIcon = BitmapDescriptor.defaultMarker;
   final LocationService _locationService = LocationService();
   bool isTapped = false;
-  bool _isLoading =
-      true; // Single loading state for synchronized shimmer effects
+  bool _isLoading = true; 
+  bool isLocationValid = false; // Track if user selected suggestion
 
+ void onSuggestionSelected(LatLng newLocation) {
+    setState(() {
+      isLocationValid = true;
+      // Update map to the selected location
+      _locationService.updateSelectedLocation(newLocation);
+    });
+  }
   @override
   void initState() {
     super.initState();
+
+    addCustomIcon();
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(statusBarColor: Colors.transparent),
     );
 
     // Initialize location service and map loading together
     Future.delayed(Duration.zero, () async {
+         
       await _locationService.initialize();
 
       // Add a consistent delay after initialization to ensure map has time to load
@@ -43,6 +54,20 @@ class _LuxuryGroundTransportationState
     });
   }
 
+  void addCustomIcon() {
+    BitmapDescriptor.asset(
+      ImageConfiguration(size: Size(40, 40)),
+      "assets/icons/pick_up.png",
+    ).then((icon) {
+      setState(() {
+        markerIcon = icon;
+        _locationService.setCustomMarkerIcon(markerIcon);
+      });
+    });
+  }
+void onPickupLocationSelected(LatLng newLocation) {
+  _locationService.updateSelectedLocation(newLocation);
+}
   void expandSheet() {
     setState(() {
       isTapped = true;
@@ -225,7 +250,7 @@ class _LuxuryGroundTransportationState
         children: [
           // Map
           Positioned.fill(
-            bottom: size.height*0.1,
+            bottom: size.height * 0.1,
             child: GoogleMap(
               myLocationEnabled: true,
               myLocationButtonEnabled: true,
@@ -261,6 +286,7 @@ class _LuxuryGroundTransportationState
                       isTapped = true;
                     });
                   },
+                onPickupLocationSelected: onSuggestionSelected, 
                 ),
               );
             },
