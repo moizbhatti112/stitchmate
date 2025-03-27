@@ -69,7 +69,7 @@ class _BookingFormState extends State<BookingForm> with SingleTickerProviderStat
                     ),
                     HourlyForm(
                       onFormFieldTap: widget.onFormFieldTap,
-                      onPickupLocationSelected: widget.onDropoffLocationSelected,
+                      onPickupLocationSelected: widget.onPickupLocationSelected,
                     ),
                   ],
                 ),

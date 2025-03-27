@@ -18,28 +18,21 @@ class LuxuryGroundTransportationState
     extends State<LuxuryGroundTransportation> {
   BitmapDescriptor markerIcon = BitmapDescriptor.defaultMarker;
    BitmapDescriptor dropoffMarkerIcon = BitmapDescriptor.defaultMarker;
-  final LocationService _locationService = LocationService();
+  LocationService _locationService = LocationService();
   bool isTapped = false;
   bool _isLoading = true; 
   bool isLocationValid = false; // Track if user selected suggestion
-
- void onSuggestionSelected(LatLng newLocation) {
-    setState(() {
-      isLocationValid = true;
-      // Update map to the selected location
-      _locationService.updateSelectedLocation(newLocation);
-    });
-  }
-   void onDropoffLocationSelected(LatLng newLocation) {
-    setState(() {
-      // Add a second marker for drop-off location
-      _locationService.addDropoffMarker(newLocation, dropoffMarkerIcon);
-    });
-  }
   @override
   void initState() {
     super.initState();
-
+_locationService = LocationService(
+      onLocationUpdated: () {
+        if (mounted) {
+          setState(() {
+          });
+        }
+      }
+    );
     addCustomIcon();
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(statusBarColor: Colors.transparent),
@@ -68,7 +61,28 @@ class LuxuryGroundTransportationState
       });
     });
   }
-
+  //////////////////////////////////////////////////////////////////////////////////////////
+ void onSuggestionSelected(LatLng newLocation) {
+    setState(() {
+      isLocationValid = true;
+      // Update map to the selected location
+      _locationService.updateSelectedLocation(newLocation);
+    });
+  }
+  /////////////////////////////////////////////////////////////////////////////////////
+   void onDropoffLocationSelected(LatLng newLocation) {
+    setState(() {
+      
+      // Add a second marker for drop-off location
+        debugPrint("Current Position Before Polyline: ${_locationService.currentPosition}");
+    debugPrint("New Dropoff Location: $newLocation");
+      _locationService.addDropoffMarker(newLocation, dropoffMarkerIcon);
+        
+        
+    });
+    _locationService.getRoutePolyline(_locationService.currentPosition, newLocation);
+  }
+  ///////////////////////////////////////////////////////////////////////////////////////////
   void addCustomIcon() {
     BitmapDescriptor.asset(
       ImageConfiguration(size: Size(50, 50)),
@@ -80,15 +94,17 @@ class LuxuryGroundTransportationState
       });
     });
   }
+///////////////////////////////////////////////////////////////////////////////////////////
 void onPickupLocationSelected(LatLng newLocation) {
   _locationService.updateSelectedLocation(newLocation);
 }
+///////////////////////////////////////////////////////////////////////////////////////////
   void expandSheet() {
     setState(() {
       isTapped = true;
     });
   }
-
+///////////////////////////////////////////////////////////////////////////////////////////
   @override
   void dispose() {
     _locationService.dispose();
@@ -236,7 +252,7 @@ void onPickupLocationSelected(LatLng newLocation) {
 
   @override
   Widget build(BuildContext context) {
-    // Single unified loading state for entire screen
+// Single unified loading state for entire screen
     final size = MediaQuery.sizeOf(context);
     if (_isLoading) {
       return Scaffold(
@@ -258,8 +274,7 @@ void onPickupLocationSelected(LatLng newLocation) {
         ),
       );
     }
-
-    // Regular UI when everything is loaded
+// Regular UI when everything is loaded
     return Scaffold(
       body: Stack(
         children: [
@@ -270,6 +285,7 @@ void onPickupLocationSelected(LatLng newLocation) {
               myLocationEnabled: true,
               myLocationButtonEnabled: true,
               markers: Set<Marker>.from(_locationService.markers),
+               polylines: _locationService.polylines, 
               initialCameraPosition: CameraPosition(
                 target: _locationService.currentPosition,
                 zoom: 15,
@@ -282,7 +298,7 @@ void onPickupLocationSelected(LatLng newLocation) {
             ),
           ),
 
-          // Regular bottom sheet
+// Regular bottom sheet
           DraggableScrollableSheet(
             initialChildSize: isTapped ? 0.9 : 0.45,
             minChildSize: 0.4,
@@ -298,7 +314,7 @@ void onPickupLocationSelected(LatLng newLocation) {
                   scrollController: scrollController,
                   onFormFieldTap: () {
                     setState(() {
-                      isTapped = true;
+                      isTapped = true; 
                     });
                   },
                 onPickupLocationSelected: onSuggestionSelected, 
