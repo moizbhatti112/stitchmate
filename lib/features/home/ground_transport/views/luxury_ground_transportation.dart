@@ -21,7 +21,8 @@ class LuxuryGroundTransportationState
   LocationService _locationService = LocationService();
   bool isTapped = false;
   bool _isLoading = true; 
-  bool isLocationValid = false; // Track if user selected suggestion
+  bool isLocationValid = false;
+  LatLng? _dropoffLocation;  // Track if user selected suggestion
   @override
   void initState() {
     super.initState();
@@ -62,25 +63,33 @@ _locationService = LocationService(
     });
   }
   //////////////////////////////////////////////////////////////////////////////////////////
- void onSuggestionSelected(LatLng newLocation) {
-    setState(() {
-      isLocationValid = true;
-      // Update map to the selected location
-      _locationService.updateSelectedLocation(newLocation);
-    });
-  }
+void onSuggestionSelected(LatLng newLocation) {
+  setState(() {
+    isLocationValid = true;
+    // Update map to the selected location
+    _locationService.updateSelectedLocation(newLocation);
+
+    // If dropoff location was previously selected, update the route
+    if (_dropoffLocation != null) {
+      _locationService.getRoutePolyline(newLocation, _dropoffLocation!);
+    }
+  });
+}
   /////////////////////////////////////////////////////////////////////////////////////
-   void onDropoffLocationSelected(LatLng newLocation) {
+void onDropoffLocationSelected(LatLng newLocation) {
     setState(() {
+      // Store dropoff location
+      _dropoffLocation = newLocation;
       
       // Add a second marker for drop-off location
-        debugPrint("Current Position Before Polyline: ${_locationService.currentPosition}");
-    debugPrint("New Dropoff Location: $newLocation");
       _locationService.addDropoffMarker(newLocation, dropoffMarkerIcon);
-        
-        
     });
-    _locationService.getRoutePolyline(_locationService.currentPosition, newLocation);
+    
+    // Get route polyline between current pickup and this dropoff
+    _locationService.getRoutePolyline(
+      _locationService.currentPosition, 
+      newLocation
+    );
   }
   ///////////////////////////////////////////////////////////////////////////////////////////
   void addCustomIcon() {

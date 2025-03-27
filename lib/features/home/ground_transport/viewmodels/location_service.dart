@@ -33,7 +33,7 @@ class LocationService {
   String get mapStyle => _mapStyle;
  
   // Fetch best route from Directions API
-///////////////////////////////////////////////////////////////////////////////////////////
+
   Future<void> getRoutePolyline(LatLng pickup, LatLng dropoff) async {
     debugPrint("Fetching route between coordinates...");
     debugPrint("Pickup: ${pickup.latitude}, ${pickup.longitude}");
@@ -79,7 +79,7 @@ class LocationService {
           debugPrint(
             "Polyline added successfully with ${decodedPoints.length} points",
           );
-          onLocationUpdated?.call();
+           onLocationUpdated?.call();
         } else {
           debugPrint("No route found or status is not OK");
           debugPrint("API Response: ${json.encode(data)}");
@@ -93,7 +93,7 @@ class LocationService {
     }
   }
 
-//////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////////////
   // Decode polyline points
   List<LatLng> _decodePolyline(String polyline) {
     List<LatLng> points = [];
@@ -126,7 +126,7 @@ class LocationService {
     return points;
   }
 
-/////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
   Future<void> initialize() async {
     await _loadMapStyle();
     await getCurrentLocation();
@@ -169,9 +169,8 @@ class LocationService {
     if (_mapInitialized) {
       _fitMarkersBounds();
     }
-    onLocationUpdated?.call(); 
   }
-///////////////////////////////////////////////////////////////////////////////////////////
+
   // Method to fit map bounds to show all markers
   void _fitMarkersBounds() {
     if (_markers.length > 1) {
