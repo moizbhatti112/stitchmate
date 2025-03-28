@@ -6,6 +6,7 @@ import 'package:gyde/features/authentication/views/signup_screen.dart';
 import 'package:gyde/features/authentication/views/welcome.dart';
 import 'package:gyde/features/home/ground_transport/viewmodels/booking_provider.dart';
 import 'package:gyde/features/home/ground_transport/viewmodels/choosevehicle_provider.dart';
+import 'package:gyde/features/home/ground_transport/viewmodels/route_provider.dart';
 
 import 'package:gyde/features/home/ground_transport/views/booking_confirmation.dart';
 import 'package:gyde/features/home/ground_transport/views/choose_vehicle.dart';
@@ -23,7 +24,7 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (_)=> ChooseVehicleProvider()),
         ChangeNotifierProvider(create: (_) => BookingProvider()),
-        
+        ChangeNotifierProvider(create: (_) => RouteProvider()),
        
          
       ],

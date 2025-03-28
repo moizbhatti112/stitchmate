@@ -16,3 +16,4 @@ const Color circlemenusbg = Color(0xFFFDFDFD);
 const Color circlemenusborder = Color(0xFFF2F2F2);
 const Color transparent = Colors.transparent;
 const Color white = Colors.white;
+const Color sheetshimmer = Color.fromARGB(255, 209, 208, 208);

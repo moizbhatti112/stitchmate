@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:gyde/core/constants/colors.dart';
 import 'package:gyde/core/widgets/mybutton.dart';
 import 'package:gyde/features/home/ground_transport/viewmodels/booking_provider.dart';
-// import 'package:gyde/features/home/ground_transport/viewmodels/choosevehicle_provider.dart';
+import 'package:gyde/features/home/ground_transport/viewmodels/location_service.dart';
+import 'package:gyde/features/home/ground_transport/viewmodels/route_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:shimmer/shimmer.dart';
 
 class BookingConfirmation extends StatefulWidget {
   const BookingConfirmation({super.key});
@@ -15,16 +19,131 @@ class BookingConfirmation extends StatefulWidget {
 
 class _BookingConfirmationState extends State<BookingConfirmation> {
   final TextEditingController _notescontroller = TextEditingController();
+  BitmapDescriptor markerIcon = BitmapDescriptor.defaultMarker;
+  BitmapDescriptor dropoffMarkerIcon = BitmapDescriptor.defaultMarker;
+  LocationService _locationService = LocationService();
+    bool _isMapLoading = true;
+  @override
+  void initState() {
+    super.initState();
+
+    _locationService = LocationService(
+      onLocationUpdated: () {
+        if (mounted) {
+          setState(() {});
+        }
+      },
+    );
+    
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(statusBarColor: Colors.transparent),
+    );
+
+    // Initialize location service and load custom markers
+    Future.delayed(Duration.zero, () async {
+      await _locationService.initialize();
+ 
+      // Load marker icons
+      Future.wait([
+        BitmapDescriptor.asset(
+          ImageConfiguration(size: Size(40, 40)),
+          "assets/icons/pickg.png",
+        ).then((icon) {
+          setState(() {
+            markerIcon = icon;
+            _locationService.setCustomMarkerIcon(markerIcon);
+          });
+        }),
+        BitmapDescriptor.asset(
+          ImageConfiguration(size: Size(40, 40)),
+          "assets/icons/dropg.png",
+        ).then((icon) {
+          setState(() {
+            dropoffMarkerIcon = icon;
+          });
+        }),
+      ]);
+    });
+     Future.delayed(const Duration(seconds: 5), () {
+        if (mounted) {
+          setState(() {
+            _isMapLoading = false; 
+          });
+        }
+      });
+  }
+
   @override
   Widget build(BuildContext context) {
     final bookingProvider = Provider.of<BookingProvider>(context);
-    // final vehicleprovider = Provider.of<ChooseVehicleProvider>(context);
+    final routeProvider = Provider.of<RouteProvider>(context);
+    final LatLng? pickup = routeProvider.pickupLocation;
+    final LatLng? dropoff = routeProvider.dropoffLocation;
     final size = MediaQuery.sizeOf(context);
+
+    // Set up markers and polyline if both pickup and dropoff locations are available
+    if (pickup != null && dropoff != null) {
+      // Clear previous markers
+      _locationService.markers.clear();
+
+      // Add pickup marker
+      _locationService.markers.add(
+        Marker(
+          markerId: const MarkerId("current_location"),
+          position: pickup,
+          icon: markerIcon,
+          infoWindow: const InfoWindow(title: "Pickup Location"),
+        ),
+      );
+
+      // Add dropoff marker
+      _locationService.markers.add(
+        Marker(
+          markerId: const MarkerId("dropoff_location"),
+          position: dropoff,
+          icon: dropoffMarkerIcon,
+          infoWindow: const InfoWindow(title: "Drop-off Location"),
+        ),
+      );
+
+      // Get route polyline if not already fetched
+      if (_locationService.polylines.isEmpty) {
+        _locationService.getRoutePolyline(pickup, dropoff);
+      }
+    }
+
     return Scaffold(
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset('assets/images/map.png', fit: BoxFit.cover),
+            child: Stack(
+              children:[GoogleMap(
+                myLocationEnabled: true,
+                myLocationButtonEnabled: true,
+                markers: Set<Marker>.from(_locationService.markers),
+                polylines: _locationService.polylines,
+                initialCameraPosition: CameraPosition(
+                  target: pickup ?? LatLng(37.7749, -122.4194),
+                  zoom: 15,
+                ),
+                    onMapCreated: _locationService.onMapCreated,
+                style: _locationService.mapStyle.isEmpty
+                    ? null
+                    : _locationService.mapStyle,
+                    
+              ),
+                 if (_isMapLoading)
+                  Positioned.fill(
+                    child: Shimmer.fromColors(
+                      baseColor: Colors.grey[300]!,
+                      highlightColor: Colors.grey[100]!,
+                      child: Container(
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+              ]
+            ),
           ),
           DraggableScrollableSheet(
             initialChildSize: 0.8,
@@ -98,8 +217,7 @@ class _BookingConfirmationState extends State<BookingConfirmation> {
                           color: grey,
                         ),
                       ),
-
-                      SizedBox(height: size.height * 0.015),
+                SizedBox(height: size.height * 0.015),
                       Container(
                         height: size.height * 0.12,
                         width: double.infinity,
@@ -281,8 +399,9 @@ class _BookingConfirmationState extends State<BookingConfirmation> {
                       ),
                         SizedBox(height: size.height * 0.02),
                       Divider(),
-                        SizedBox(height: size.height * 0.02),
-                      MyButton(text: "Confirm Order", onPressed: (){})
+                      
+                      SizedBox(height: size.height * 0.02),
+                      MyButton(text: "Confirm Order", onPressed: () {}),
                     ],
                   ),
                 ),

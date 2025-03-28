@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:gyde/core/constants/colors.dart';
 import 'package:gyde/features/home/ground_transport/viewmodels/location_service.dart';
+import 'package:gyde/features/home/ground_transport/viewmodels/route_provider.dart';
 import 'package:gyde/features/home/ground_transport/views/booking_form.dart';
+import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
 class LuxuryGroundTransportation extends StatefulWidget {
@@ -17,22 +19,21 @@ class LuxuryGroundTransportation extends StatefulWidget {
 class LuxuryGroundTransportationState
     extends State<LuxuryGroundTransportation> {
   BitmapDescriptor markerIcon = BitmapDescriptor.defaultMarker;
-   BitmapDescriptor dropoffMarkerIcon = BitmapDescriptor.defaultMarker;
+  BitmapDescriptor dropoffMarkerIcon = BitmapDescriptor.defaultMarker;
   LocationService _locationService = LocationService();
   bool isTapped = false;
-  bool _isLoading = true; 
+  bool _isLoading = true;
   bool isLocationValid = false;
-  LatLng? _dropoffLocation;  // Track if user selected suggestion
+  LatLng? _dropoffLocation; // Track if user selected suggestion
   @override
   void initState() {
     super.initState();
-_locationService = LocationService(
+    _locationService = LocationService(
       onLocationUpdated: () {
         if (mounted) {
-          setState(() {
-          });
+          setState(() {});
         }
-      }
+      },
     );
     addCustomIcon();
     SystemChrome.setSystemUIOverlayStyle(
@@ -41,10 +42,9 @@ _locationService = LocationService(
 
     // Initialize location service and map loading together
     Future.delayed(Duration.zero, () async {
-         
       await _locationService.initialize();
 
-    BitmapDescriptor.asset(
+      BitmapDescriptor.asset(
         ImageConfiguration(size: Size(40, 40)),
         "assets/icons/dropg.png", // You'll need to add this icon
       ).then((icon) {
@@ -53,7 +53,7 @@ _locationService = LocationService(
         });
       });
       // Add a consistent delay after initialization to ensure map has time to load
-      Future.delayed(const Duration(milliseconds: 1500), () {
+      Future.delayed(const Duration(seconds: 7), () {
         if (mounted) {
           setState(() {
             _isLoading = false; // Both map and sheet will stop shimmer together
@@ -62,35 +62,40 @@ _locationService = LocationService(
       });
     });
   }
-  //////////////////////////////////////////////////////////////////////////////////////////
-void onSuggestionSelected(LatLng newLocation) {
-  setState(() {
-    isLocationValid = true;
-    // Update map to the selected location
-    _locationService.updateSelectedLocation(newLocation);
 
-    // If dropoff location was previously selected, update the route
-    if (_dropoffLocation != null) {
-      _locationService.getRoutePolyline(newLocation, _dropoffLocation!);
-    }
-  });
-}
+  //////////////////////////////////////////////////////////////////////////////////////////
+  void onSuggestionSelected(LatLng newLocation) {
+      final routeProvider = Provider.of<RouteProvider>(context, listen: false);
+    setState(() {
+      isLocationValid = true;
+      // Update map to the selected location
+      _locationService.updateSelectedLocation(newLocation);
+      routeProvider.setPickupLocation(newLocation);
+      // If dropoff location was previously selected, update the route
+      if (_dropoffLocation != null) {
+        _locationService.getRoutePolyline(newLocation, _dropoffLocation!);
+      }
+    });
+  }
+
   /////////////////////////////////////////////////////////////////////////////////////
-void onDropoffLocationSelected(LatLng newLocation) {
+  void onDropoffLocationSelected(LatLng newLocation) {
+     final routeProvider = Provider.of<RouteProvider>(context, listen: false);
     setState(() {
       // Store dropoff location
       _dropoffLocation = newLocation;
-      
+        routeProvider.setDropoffLocation(newLocation);
       // Add a second marker for drop-off location
       _locationService.addDropoffMarker(newLocation, dropoffMarkerIcon);
     });
-    
+
     // Get route polyline between current pickup and this dropoff
     _locationService.getRoutePolyline(
-      _locationService.currentPosition, 
-      newLocation
+      _locationService.currentPosition,
+      newLocation,
     );
   }
+
   ///////////////////////////////////////////////////////////////////////////////////////////
   void addCustomIcon() {
     BitmapDescriptor.asset(
@@ -103,17 +108,20 @@ void onDropoffLocationSelected(LatLng newLocation) {
       });
     });
   }
-///////////////////////////////////////////////////////////////////////////////////////////
-void onPickupLocationSelected(LatLng newLocation) {
-  _locationService.updateSelectedLocation(newLocation);
-}
-///////////////////////////////////////////////////////////////////////////////////////////
+
+  ///////////////////////////////////////////////////////////////////////////////////////////
+  void onPickupLocationSelected(LatLng newLocation) {
+    _locationService.updateSelectedLocation(newLocation);
+  }
+
+  ///////////////////////////////////////////////////////////////////////////////////////////
   void expandSheet() {
     setState(() {
       isTapped = true;
     });
   }
-///////////////////////////////////////////////////////////////////////////////////////////
+
+  ///////////////////////////////////////////////////////////////////////////////////////////
   @override
   void dispose() {
     _locationService.dispose();
@@ -122,51 +130,19 @@ void onPickupLocationSelected(LatLng newLocation) {
 
   // Create shimmer for map area
   Widget _buildMapShimmerEffect() {
+    final size = MediaQuery.sizeOf(context);
     return Shimmer.fromColors(
-      baseColor: Colors.grey[300]!,
-      highlightColor: Colors.grey[100]!,
+      baseColor: nextbg,
+      highlightColor: bgColor,
       child: SizedBox(
         width: double.infinity,
         height: double.infinity,
         child: Column(
           children: [
             Container(
-              height: 150,
+              height: size.height * 0.6,
               margin: EdgeInsets.only(bottom: 8, top: 32),
-              color: Colors.white,
-            ),
-            Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: Container(
-                    height: 100,
-                    margin: EdgeInsets.only(right: 8),
-                    color: Colors.white,
-                  ),
-                ),
-                Expanded(
-                  flex: 1,
-                  child: Container(height: 100, color: Colors.white),
-                ),
-              ],
-            ),
-            SizedBox(height: 16),
-            Container(
-              height: 80,
-              margin: EdgeInsets.only(bottom: 8),
-              color: Colors.white,
-            ),
-            Expanded(
-              child: GridView.count(
-                crossAxisCount: 2,
-                mainAxisSpacing: 8,
-                crossAxisSpacing: 8,
-                children: List.generate(
-                  4,
-                  (index) => Container(color: Colors.white),
-                ),
-              ),
+              color: bgColor,
             ),
           ],
         ),
@@ -177,83 +153,13 @@ void onPickupLocationSelected(LatLng newLocation) {
   // Create shimmer for the bottom sheet
   Widget _buildBottomSheetShimmer() {
     return Shimmer.fromColors(
-      baseColor: Colors.grey[300]!,
-      highlightColor: Colors.grey[100]!,
+      baseColor: sheetshimmer,
+      highlightColor: white,
       child: Container(
         padding: const EdgeInsets.all(16.0),
         decoration: const BoxDecoration(
           color: bgColor,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Handle indicator
-            Center(
-              child: Container(
-                width: 40,
-                height: 5,
-                margin: EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: grey,
-                  borderRadius: BorderRadius.circular(2.5),
-                ),
-              ),
-            ),
-
-            // Form field shimmer
-            Container(
-              height: 50,
-              margin: EdgeInsets.only(bottom: 16),
-              decoration: BoxDecoration(
-                color: grey,
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-
-            Container(
-              height: 50,
-              margin: EdgeInsets.only(bottom: 16),
-              decoration: BoxDecoration(
-                color: grey,
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    height: 50,
-                    margin: EdgeInsets.only(right: 8),
-                    decoration: BoxDecoration(
-                      color: grey,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Container(
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: grey,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            SizedBox(height: 24),
-
-            Container(
-              height: 50,
-              decoration: BoxDecoration(
-                color: grey,
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ],
+          borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
         ),
       ),
     );
@@ -261,7 +167,7 @@ void onPickupLocationSelected(LatLng newLocation) {
 
   @override
   Widget build(BuildContext context) {
-// Single unified loading state for entire screen
+    // Single unified loading state for entire screen
     final size = MediaQuery.sizeOf(context);
     if (_isLoading) {
       return Scaffold(
@@ -283,7 +189,7 @@ void onPickupLocationSelected(LatLng newLocation) {
         ),
       );
     }
-// Regular UI when everything is loaded
+    // Regular UI when everything is loaded
     return Scaffold(
       body: Stack(
         children: [
@@ -294,7 +200,7 @@ void onPickupLocationSelected(LatLng newLocation) {
               myLocationEnabled: true,
               myLocationButtonEnabled: true,
               markers: Set<Marker>.from(_locationService.markers),
-               polylines: _locationService.polylines, 
+              polylines: _locationService.polylines,
               initialCameraPosition: CameraPosition(
                 target: _locationService.currentPosition,
                 zoom: 15,
@@ -307,7 +213,7 @@ void onPickupLocationSelected(LatLng newLocation) {
             ),
           ),
 
-// Regular bottom sheet
+          // Regular bottom sheet
           DraggableScrollableSheet(
             initialChildSize: isTapped ? 0.9 : 0.45,
             minChildSize: 0.4,
@@ -323,11 +229,11 @@ void onPickupLocationSelected(LatLng newLocation) {
                   scrollController: scrollController,
                   onFormFieldTap: () {
                     setState(() {
-                      isTapped = true; 
+                      isTapped = true;
                     });
                   },
-                onPickupLocationSelected: onSuggestionSelected, 
-                onDropoffLocationSelected: onDropoffLocationSelected,
+                  onPickupLocationSelected: onSuggestionSelected,
+                  onDropoffLocationSelected: onDropoffLocationSelected,
                 ),
               );
             },
