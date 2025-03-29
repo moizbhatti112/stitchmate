@@ -22,7 +22,7 @@ class _BookingConfirmationState extends State<BookingConfirmation> {
   BitmapDescriptor markerIcon = BitmapDescriptor.defaultMarker;
   BitmapDescriptor dropoffMarkerIcon = BitmapDescriptor.defaultMarker;
   LocationService _locationService = LocationService();
-    bool _isMapLoading = true;
+  bool _isMapLoading = true;
   @override
   void initState() {
     super.initState();
@@ -34,7 +34,7 @@ class _BookingConfirmationState extends State<BookingConfirmation> {
         }
       },
     );
-    
+
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(statusBarColor: Colors.transparent),
     );
@@ -42,7 +42,7 @@ class _BookingConfirmationState extends State<BookingConfirmation> {
     // Initialize location service and load custom markers
     Future.delayed(Duration.zero, () async {
       await _locationService.initialize();
- 
+
       // Load marker icons
       Future.wait([
         BitmapDescriptor.asset(
@@ -64,13 +64,13 @@ class _BookingConfirmationState extends State<BookingConfirmation> {
         }),
       ]);
     });
-     Future.delayed(const Duration(seconds: 5), () {
-        if (mounted) {
-          setState(() {
-            _isMapLoading = false; 
-          });
-        }
-      });
+    Future.delayed(const Duration(seconds: 5), () {
+      if (mounted) {
+        setState(() {
+          _isMapLoading = false;
+        });
+      }
+    });
   }
 
   @override
@@ -117,32 +117,29 @@ class _BookingConfirmationState extends State<BookingConfirmation> {
         children: [
           Positioned.fill(
             child: Stack(
-              children:[GoogleMap(
-                myLocationEnabled: true,
-                myLocationButtonEnabled: true,
-                markers: Set<Marker>.from(_locationService.markers),
-                polylines: _locationService.polylines,
-                initialCameraPosition: CameraPosition(
-                  target: pickup ?? LatLng(37.7749, -122.4194),
-                  zoom: 15,
+              children: [
+                GoogleMap(
+                  markers: Set<Marker>.from(_locationService.markers),
+                  polylines: _locationService.polylines,
+                  initialCameraPosition: CameraPosition(
+                    target: pickup ?? LatLng(37.7749, -122.4194),
+                    zoom: 15,
+                  ),
+                  onMapCreated: _locationService.onMapCreated,
+                  style:
+                      _locationService.mapStyle.isEmpty
+                          ? null
+                          : _locationService.mapStyle,
                 ),
-                    onMapCreated: _locationService.onMapCreated,
-                style: _locationService.mapStyle.isEmpty
-                    ? null
-                    : _locationService.mapStyle,
-                    
-              ),
-                 if (_isMapLoading)
+                if (_isMapLoading)
                   Positioned.fill(
                     child: Shimmer.fromColors(
                       baseColor: Colors.grey[300]!,
                       highlightColor: Colors.grey[100]!,
-                      child: Container(
-                        color: Colors.white,
-                      ),
+                      child: Container(color: Colors.white),
                     ),
                   ),
-              ]
+              ],
             ),
           ),
           DraggableScrollableSheet(
@@ -217,7 +214,7 @@ class _BookingConfirmationState extends State<BookingConfirmation> {
                           color: grey,
                         ),
                       ),
-                SizedBox(height: size.height * 0.015),
+                      SizedBox(height: size.height * 0.015),
                       Container(
                         height: size.height * 0.12,
                         width: double.infinity,
@@ -397,9 +394,9 @@ class _BookingConfirmationState extends State<BookingConfirmation> {
                           ),
                         ),
                       ),
-                        SizedBox(height: size.height * 0.02),
+                      SizedBox(height: size.height * 0.02),
                       Divider(),
-                      
+
                       SizedBox(height: size.height * 0.02),
                       MyButton(text: "Confirm Order", onPressed: () {}),
                     ],

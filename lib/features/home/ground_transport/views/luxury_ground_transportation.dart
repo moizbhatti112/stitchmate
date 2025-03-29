@@ -197,8 +197,7 @@ class LuxuryGroundTransportationState
           Positioned.fill(
             bottom: size.height * 0.1,
             child: GoogleMap(
-              myLocationEnabled: true,
-              myLocationButtonEnabled: true,
+
               markers: Set<Marker>.from(_locationService.markers),
               polylines: _locationService.polylines,
               initialCameraPosition: CameraPosition(

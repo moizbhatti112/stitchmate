@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -10,7 +11,6 @@ import 'package:gyde/core/constants/colors.dart';
 import 'package:http/http.dart' as http;
 
 class LocationService {
-
   final VoidCallback? onLocationUpdated;
 
   LocationService({this.onLocationUpdated});
@@ -31,7 +31,7 @@ class LocationService {
   Set<Marker> get markers => _markers;
   LatLng get currentPosition => _currentPosition;
   String get mapStyle => _mapStyle;
- 
+
   // Fetch best route from Directions API
 
   Future<void> getRoutePolyline(LatLng pickup, LatLng dropoff) async {
@@ -79,7 +79,7 @@ class LocationService {
           debugPrint(
             "Polyline added successfully with ${decodedPoints.length} points",
           );
-           onLocationUpdated?.call();
+          onLocationUpdated?.call();
         } else {
           debugPrint("No route found or status is not OK");
           debugPrint("API Response: ${json.encode(data)}");
@@ -145,7 +145,7 @@ class LocationService {
     updateMarkers();
   }
 
-///////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////
 
   void addDropoffMarker(LatLng location, BitmapDescriptor icon) {
     _markers.removeWhere(
@@ -178,7 +178,8 @@ class LocationService {
       _mapController.animateCamera(CameraUpdate.newLatLngBounds(bounds, 100));
     }
   }
-///////////////////////////////////////////////////////////////////////////////////////////
+
+  ///////////////////////////////////////////////////////////////////////////////////////////
   // Calculate bounds that include all markers
   LatLngBounds _calculateMarkerBounds() {
     double minLat = double.infinity;
@@ -206,7 +207,7 @@ class LocationService {
   double min(double a, double b) => a < b ? a : b;
   double max(double a, double b) => a > b ? a : b;
   // Load Custom Map Style
-///////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////
   Future<void> _loadMapStyle() async {
     String style = await rootBundle.loadString('assets/map_style.json');
     _mapStyle = style;
@@ -220,12 +221,14 @@ class LocationService {
       zoomToCurrentLocation();
     });
   }
-///////////////////////////////////////////////////////////////////////////////////////////
+
+  ///////////////////////////////////////////////////////////////////////////////////////////
   // Get Current Location and Add Marker
   Future<void> getCurrentLocation() async {
     const locationSettings = LocationSettings(
       accuracy: LocationAccuracy.high,
       distanceFilter: 10,
+      timeLimit: Duration(seconds: 10),
     );
 
     try {
@@ -241,13 +244,13 @@ class LocationService {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
           _isLoading = false;
-          return;
+          await Geolocator.requestPermission();
         }
       }
 
       if (permission == LocationPermission.deniedForever) {
         _isLoading = false;
-        return;
+        await Geolocator.requestPermission();
       }
 
       final position = await Geolocator.getCurrentPosition(
@@ -256,7 +259,7 @@ class LocationService {
 
       _currentPosition = LatLng(position.latitude, position.longitude);
       _isLoading = false;
-      
+
       updateMarkers(); // 🔥 Update the markers
 
       if (_mapInitialized) {
@@ -264,17 +267,34 @@ class LocationService {
           CameraUpdate.newCameraPosition(
             CameraPosition(target: _currentPosition, zoom: 15),
           ),
-          
         );
-         onLocationUpdated?.call();
-          updateMarkers();
+        onLocationUpdated?.call();
+        updateMarkers();
       }
     } catch (e) {
-      _isLoading = false;
-      debugPrint('Error getting location: $e');
+      // If high accuracy times out, try with lower accuracy
+      if (e is TimeoutException) {
+        try {
+          const locationSett = LocationSettings(
+            accuracy: LocationAccuracy.medium,
+            distanceFilter: 10,
+            timeLimit: Duration(seconds: 5),
+          );
+          Position position = await Geolocator.getCurrentPosition(
+            locationSettings: locationSett,
+          );
+
+          _currentPosition = LatLng(position.latitude, position.longitude);
+        } catch (fallbackError) {
+          rethrow;
+        }
+      } else {
+        rethrow;
+      }
     }
   }
-///////////////////////////////////////////////////////////////////////////////////////////
+
+  ///////////////////////////////////////////////////////////////////////////////////////////
   // Zoom to Current Location
   Future<void> zoomToCurrentLocation() async {
     const locationSettings = LocationSettings(
@@ -302,12 +322,13 @@ class LocationService {
           ),
         ),
       );
-       onLocationUpdated?.call();
+      onLocationUpdated?.call();
     } catch (e) {
       debugPrint("Error zooming to location: $e");
     }
   }
-///////////////////////////////////////////////////////////////////////////////////////////
+
+  ///////////////////////////////////////////////////////////////////////////////////////////
   // 🔥 Function to Update Markers
   void updateMarkers() {
     LatLng? dropoffPosition;
@@ -342,7 +363,8 @@ class LocationService {
       );
     }
   }
-///////////////////////////////////////////////////////////////////////////////////////////
+
+  ///////////////////////////////////////////////////////////////////////////////////////////
   // New method to update map with selected location
   void updateSelectedLocation(LatLng location) {
     _currentPosition = location;
