@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:gyde/features/home/ground_transport/autocomplete_prediction.dart'; // Import your custom class
+import 'package:gyde/features/home/ground_transport/api_service/autocomplete_prediction.dart'; // Import your custom class
 
 class PlaceAutoCompleteResponse {
   final String status;

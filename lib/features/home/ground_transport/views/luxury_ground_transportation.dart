@@ -36,36 +36,37 @@ class LuxuryGroundTransportationState
       },
     );
     addCustomIcon();
+
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(statusBarColor: Colors.transparent),
     );
 
-    // Initialize location service and map loading together
-    Future.delayed(Duration.zero, () async {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       await _locationService.initialize();
 
       BitmapDescriptor.asset(
         ImageConfiguration(size: Size(40, 40)),
-        "assets/icons/dropg.png", // You'll need to add this icon
+        "assets/icons/dropg.png",
       ).then((icon) {
-        setState(() {
-          dropoffMarkerIcon = icon;
-        });
-      });
-      // Add a consistent delay after initialization to ensure map has time to load
-      Future.delayed(const Duration(seconds: 7), () {
         if (mounted) {
           setState(() {
-            _isLoading = false; // Both map and sheet will stop shimmer together
+            dropoffMarkerIcon = icon;
           });
         }
       });
+
+      await Future.delayed(const Duration(milliseconds: 500)); // safer delay
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     });
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////
   void onSuggestionSelected(LatLng newLocation) {
-      final routeProvider = Provider.of<RouteProvider>(context, listen: false);
+    final routeProvider = Provider.of<RouteProvider>(context, listen: false);
     setState(() {
       isLocationValid = true;
       // Update map to the selected location
@@ -80,11 +81,11 @@ class LuxuryGroundTransportationState
 
   /////////////////////////////////////////////////////////////////////////////////////
   void onDropoffLocationSelected(LatLng newLocation) {
-     final routeProvider = Provider.of<RouteProvider>(context, listen: false);
+    final routeProvider = Provider.of<RouteProvider>(context, listen: false);
     setState(() {
       // Store dropoff location
       _dropoffLocation = newLocation;
-        routeProvider.setDropoffLocation(newLocation);
+      routeProvider.setDropoffLocation(newLocation);
       // Add a second marker for drop-off location
       _locationService.addDropoffMarker(newLocation, dropoffMarkerIcon);
     });
@@ -196,19 +197,25 @@ class LuxuryGroundTransportationState
           // Map
           Positioned.fill(
             bottom: size.height * 0.1,
-            child: GoogleMap(
-
-              markers: Set<Marker>.from(_locationService.markers),
-              polylines: _locationService.polylines,
-              initialCameraPosition: CameraPosition(
-                target: _locationService.currentPosition,
-                zoom: 15,
+            child: Visibility(
+              visible: !_isLoading,
+              child: GoogleMap(
+                markers: Set<Marker>.from(_locationService.markers),
+                polylines: _locationService.polylines,
+                initialCameraPosition: CameraPosition(
+                  target: _locationService.currentPosition,
+                  zoom: 15,
+                ),
+                onMapCreated: (controller) {
+                  if (mounted) {
+                    _locationService.onMapCreated(controller);
+                  }
+                },
+                style:
+                    _locationService.mapStyle.isEmpty
+                        ? null
+                        : _locationService.mapStyle,
               ),
-              onMapCreated: _locationService.onMapCreated,
-              style:
-                  _locationService.mapStyle.isEmpty
-                      ? null
-                      : _locationService.mapStyle,
             ),
           ),
 

@@ -23,6 +23,8 @@ class _BookingConfirmationState extends State<BookingConfirmation> {
   BitmapDescriptor dropoffMarkerIcon = BitmapDescriptor.defaultMarker;
   LocationService _locationService = LocationService();
   bool _isMapLoading = true;
+  GoogleMapController? _mapController;
+  
   @override
   void initState() {
     super.initState();
@@ -49,28 +51,73 @@ class _BookingConfirmationState extends State<BookingConfirmation> {
           ImageConfiguration(size: Size(40, 40)),
           "assets/icons/pickg.png",
         ).then((icon) {
-          setState(() {
-            markerIcon = icon;
-            _locationService.setCustomMarkerIcon(markerIcon);
-          });
+          if (mounted) {
+            setState(() {
+              markerIcon = icon;
+              _locationService.setCustomMarkerIcon(markerIcon);
+            });
+          }
         }),
         BitmapDescriptor.asset(
           ImageConfiguration(size: Size(40, 40)),
           "assets/icons/dropg.png",
         ).then((icon) {
-          setState(() {
-            dropoffMarkerIcon = icon;
-          });
+          if (mounted) {
+            setState(() {
+              dropoffMarkerIcon = icon;
+            });
+          }
         }),
       ]);
+      
+      // Update map view after everything is loaded
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _updateMapView();
+      });
     });
-    Future.delayed(const Duration(seconds: 5), () {
+    
+    Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
         setState(() {
           _isMapLoading = false;
         });
       }
     });
+  }
+//   @override
+// dispose() {
+//     _locationService.dispose();
+//     _mapController?.dispose();
+//     super.dispose();
+//   }
+  // Function to update map view to include both markers
+  void _updateMapView() {
+    final routeProvider = Provider.of<RouteProvider>(context, listen: false);
+    final pickup = routeProvider.pickupLocation;
+    final dropoff = routeProvider.dropoffLocation;
+    
+    if (_mapController != null && pickup != null && dropoff != null) {
+      // Create bounds that include both pickup and dropoff
+      LatLngBounds bounds = _createBounds(pickup, dropoff);
+      
+      // Animate camera to show both markers with padding
+      _mapController!.animateCamera(
+        CameraUpdate.newLatLngBounds(bounds, 80),
+      );
+    }
+  }
+
+  // Helper function to create bounds from two points
+  LatLngBounds _createBounds(LatLng point1, LatLng point2) {
+    double minLat = point1.latitude < point2.latitude ? point1.latitude : point2.latitude;
+    double maxLat = point1.latitude > point2.latitude ? point1.latitude : point2.latitude;
+    double minLng = point1.longitude < point2.longitude ? point1.longitude : point2.longitude;
+    double maxLng = point1.longitude > point2.longitude ? point1.longitude : point2.longitude;
+    
+    return LatLngBounds(
+      southwest: LatLng(minLat, minLng),
+      northeast: LatLng(maxLat, maxLng),
+    );
   }
 
   @override
@@ -111,7 +158,13 @@ class _BookingConfirmationState extends State<BookingConfirmation> {
         _locationService.getRoutePolyline(pickup, dropoff);
       }
     }
-
+    
+    String routeEstimationText = "Calculating route...";
+    if (_locationService.estimatedDistance.isNotEmpty && 
+        _locationService.estimatedDuration.isNotEmpty) {
+      routeEstimationText = "Estimated route: ${_locationService.estimatedDuration} | ${_locationService.estimatedDistance}";
+    }
+    
     return Scaffold(
       body: Stack(
         children: [
@@ -122,14 +175,26 @@ class _BookingConfirmationState extends State<BookingConfirmation> {
                   markers: Set<Marker>.from(_locationService.markers),
                   polylines: _locationService.polylines,
                   initialCameraPosition: CameraPosition(
-                    target: pickup ?? LatLng(37.7749, -122.4194),
-                    zoom: 15,
+                    // Using center point between pickup and dropoff if available
+                    target: (pickup != null && dropoff != null) 
+                        ? LatLng(
+                            (pickup.latitude + dropoff.latitude) / 2,
+                            (pickup.longitude + dropoff.longitude) / 2)
+                        : pickup ?? LatLng(37.7749, -122.4194),
+                    zoom: 12, // Zoom out a bit to potentially show both locations
                   ),
-                  onMapCreated: _locationService.onMapCreated,
-                  style:
-                      _locationService.mapStyle.isEmpty
-                          ? null
-                          : _locationService.mapStyle,
+                  onMapCreated: (GoogleMapController controller) {
+                    _mapController = controller;
+                    _locationService.onMapCreated(controller);
+                    
+                    // Wait a moment for the map to initialize properly before updating view
+                    Future.delayed(Duration(milliseconds: 300), () {
+                      _updateMapView();
+                    });
+                  },
+                  style: _locationService.mapStyle.isEmpty
+                      ? null
+                      : _locationService.mapStyle,
                 ),
                 if (_isMapLoading)
                   Positioned.fill(
@@ -142,6 +207,7 @@ class _BookingConfirmationState extends State<BookingConfirmation> {
               ],
             ),
           ),
+          // The rest of your UI remains unchanged
           DraggableScrollableSheet(
             initialChildSize: 0.8,
             minChildSize: 0.4,
@@ -206,7 +272,7 @@ class _BookingConfirmationState extends State<BookingConfirmation> {
                       ),
                       SizedBox(height: size.height * 0.015),
                       Text(
-                        "Estimated route: 2 Hours| 40 km",
+                        routeEstimationText,
                         style: TextStyle(
                           fontSize: 13,
                           fontFamily: "HelveticaNeueMedium",

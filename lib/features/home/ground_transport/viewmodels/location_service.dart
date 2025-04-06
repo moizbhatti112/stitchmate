@@ -8,6 +8,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter/services.dart';
 import 'package:gyde/core/constants/api_key.dart';
 import 'package:gyde/core/constants/colors.dart';
+import 'package:gyde/features/home/ground_transport/models/direction_model.dart';
 import 'package:http/http.dart' as http;
 
 class LocationService {
@@ -23,7 +24,7 @@ class LocationService {
   bool _isLoading = true;
   bool _mapInitialized = false;
   String _mapStyle = "";
-  LatLng _currentPosition = const LatLng(33.7463, 72.8397); // Default Location
+  LatLng _currentPosition = const LatLng(0, 0); // Default Location
   final Set<Polyline> _polylines = {};
   Set<Polyline> get polylines => _polylines;
   // Getters
@@ -31,68 +32,76 @@ class LocationService {
   Set<Marker> get markers => _markers;
   LatLng get currentPosition => _currentPosition;
   String get mapStyle => _mapStyle;
+String _estimatedDistance = "";
+String _estimatedDuration = "";
 
+// Add these getters
+String get estimatedDistance => _estimatedDistance;
+String get estimatedDuration => _estimatedDuration;
   // Fetch best route from Directions API
 
-  Future<void> getRoutePolyline(LatLng pickup, LatLng dropoff) async {
-    debugPrint("Fetching route between coordinates...");
-    debugPrint("Pickup: ${pickup.latitude}, ${pickup.longitude}");
-    debugPrint("Dropoff: ${dropoff.latitude}, ${dropoff.longitude}");
+Future<void> getRoutePolyline(LatLng pickup, LatLng dropoff) async {
+  String url =
+      "https://maps.googleapis.com/maps/api/directions/json?"
+      "origin=${pickup.latitude},${pickup.longitude}"
+      "&destination=${dropoff.latitude},${dropoff.longitude}"
+      "&key=$googleApiKey";
 
-    String url =
-        "https://maps.googleapis.com/maps/api/directions/json?"
-        "origin=${pickup.latitude},${pickup.longitude}"
-        "&destination=${dropoff.latitude},${dropoff.longitude}"
-        "&key=$googleApiKey";
+  try {
+    final response = await http.get(Uri.parse(url));
+    debugPrint("Response Status Code: ${response.statusCode}");
 
-    try {
-      final response = await http.get(Uri.parse(url));
-      debugPrint("Response Status Code: ${response.statusCode}");
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = json.decode(response.body);
+      
+      // Parse the response into our model
+      final directionsResponse = DirectionsResponse.fromJson(data);
+      
+      if (directionsResponse.status == 'OK' && directionsResponse.routes.isNotEmpty) {
+        final route = directionsResponse.routes[0];
+        final leg = route.legs[0];
+        
+        // Extract information using our models
+        _estimatedDistance = leg.distance.text;
+        _estimatedDuration = leg.duration.text;
+        debugPrint("Distance: $_estimatedDistance, Duration: $_estimatedDuration");
+        
+        final String encodedPolyline = route.overviewPolyline.points;
+        final List<LatLng> decodedPoints = _decodePolyline(encodedPolyline);
 
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> data = json.decode(response.body);
+        _polylines.clear();
+        _polylines.add(
+          Polyline(
+            polylineId: const PolylineId('route'),
+            points: decodedPoints,
+            color: blacktext,
+            width: 2,
+          ),
+        );
 
-        if (data['status'] == 'OK' &&
-            data['routes'] != null &&
-            data['routes'].isNotEmpty) {
-          final String encodedPolyline =
-              data['routes'][0]['overview_polyline']['points'];
-          final List<LatLng> decodedPoints = _decodePolyline(encodedPolyline);
-
-          _polylines.clear();
-          _polylines.add(
-            Polyline(
-              polylineId: const PolylineId('route'),
-              points: decodedPoints,
-              color: blacktext,
-              width: 2,
-            ),
+        // Update map view to show route
+        if (_mapInitialized) {
+          _mapController.animateCamera(
+            CameraUpdate.newLatLngBounds(_calculateMarkerBounds(), 100),
           );
-
-          // Update map view to show route
-          if (_mapInitialized) {
-            _mapController.animateCamera(
-              CameraUpdate.newLatLngBounds(_calculateMarkerBounds(), 100),
-            );
-          }
-
-          debugPrint(
-            "Polyline added successfully with ${decodedPoints.length} points",
-          );
-          onLocationUpdated?.call();
-        } else {
-          debugPrint("No route found or status is not OK");
-          debugPrint("API Response: ${json.encode(data)}");
         }
-      } else {
-        debugPrint("Error fetching route: ${response.statusCode}");
-        debugPrint("Response body: ${response.body}");
-      }
-    } catch (e) {
-      debugPrint("Exception in getRoutePolyline: $e");
-    }
-  }
 
+        debugPrint(
+          "Polyline added successfully with ${decodedPoints.length} points",
+        );
+        onLocationUpdated?.call();
+      } else {
+        debugPrint("No route found or status is not OK");
+        debugPrint("API Response: ${json.encode(data)}");
+      }
+    } else {
+      debugPrint("Error fetching route: ${response.statusCode}");
+      debugPrint("Response body: ${response.body}");
+    }
+  } catch (e) {
+    debugPrint("Exception in getRoutePolyline: $e");
+  }
+}
   //////////////////////////////////////////////////////////////////////////////////////
   // Decode polyline points
   List<LatLng> _decodePolyline(String polyline) {
@@ -138,7 +147,7 @@ class LocationService {
     }
   }
 
-  // Add this method to set the custom marker icon
+  // Method to set the custom marker icon
   void setCustomMarkerIcon(BitmapDescriptor icon) {
     _markerIcon = icon;
     // Re-create markers with the new icon
@@ -365,7 +374,7 @@ class LocationService {
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////
-  // New method to update map with selected location
+  // Method to update map with selected location
   void updateSelectedLocation(LatLng location) {
     _currentPosition = location;
     updateMarkers();

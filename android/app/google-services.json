@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "788229027514",
+    "project_id": "gyde-ad9fb",
+    "storage_bucket": "gyde-ad9fb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:788229027514:android:f9b4a63edcb15cdeef3483",
+        "android_client_info": {
+          "package_name": "com.example.gyde"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCb76h5eVb2LfzeHrKw5ko5gg-2rz9qlQ8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
