@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:gyde/core/constants/api_key.dart';
-import 'package:gyde/features/home/ground_transport/api_service/autocomplete_prediction.dart';
-import 'package:gyde/features/home/ground_transport/api_service/autocomplete_response.dart';
-import 'package:gyde/features/home/ground_transport/api_service/network_repo.dart';
+import 'package:stitchmate/core/constants/api_key.dart';
+import 'package:stitchmate/features/home/ground_transport/api_service/autocomplete_prediction.dart';
+import 'package:stitchmate/features/home/ground_transport/api_service/autocomplete_response.dart';
+import 'package:stitchmate/features/home/ground_transport/api_service/network_repo.dart';
 
 
 class LocationApiService {
@@ -22,19 +22,16 @@ class LocationApiService {
 
     String? response = await NetworkUtil.fetchUrl(uri);
       
-    if (response != null) {
-      try {
-        PlaceAutoCompleteResponse result =
-            PlaceAutoCompleteResponse.parseAutoCompleteResult(response);
-        return result.predictions;
-      } catch (e) {
-        debugPrint("Error parsing autocomplete response: $e");
-        return [];
-      }
-    } 
-    
-    debugPrint("No response received.");
-    return [];
+    try {
+      PlaceAutoCompleteResponse result =
+          PlaceAutoCompleteResponse.parseAutoCompleteResult(response!);
+      return result.predictions;
+    } catch (e) {
+      debugPrint("Error parsing autocomplete response: $e");
+      return [];
+    }
+      
+  
   }
 
   /// Get detailed address information from latitude and longitude
@@ -49,55 +46,53 @@ class LocationApiService {
 
     String? response = await NetworkUtil.fetchUrl(uri);
 
-    if (response != null) {
-      final data = json.decode(response);
-      if (data["status"] == "OK") {
-        final results = data["results"];
+    final data = json.decode(response!);
+    if (data["status"] == "OK") {
+      final results = data["results"];
 
-        for (var result in results) {
-          if (result["types"].contains("plus_code")) {
-            continue;
-          }
-
-          final addressComponents = result["address_components"];
-
-          String streetNumber = "";
-          String route = "";
-          String city = "";
-          String state = "";
-          String country = "";
-
-          for (var component in addressComponents) {
-            List types = component["types"];
-
-            if (types.contains("street_number")) {
-              streetNumber = component["long_name"];
-            }
-            if (types.contains("route")) {
-              route = component["long_name"];
-            }
-            if (types.contains("locality")) {
-              city = component["long_name"];
-            }
-            if (types.contains("administrative_area_level_1")) {
-              state = component["long_name"];
-            }
-            if (types.contains("country")) {
-              country = component["long_name"];
-            }
-          }
-
-          return {
-            "street": "$streetNumber $route".trim(),
-            "city": city,
-            "state": state,
-            "country": country,
-            "formattedAddress": result["formatted_address"],
-          };
+      for (var result in results) {
+        if (result["types"].contains("plus_code")) {
+          continue;
         }
+
+        final addressComponents = result["address_components"];
+
+        String streetNumber = "";
+        String route = "";
+        String city = "";
+        String state = "";
+        String country = "";
+
+        for (var component in addressComponents) {
+          List types = component["types"];
+
+          if (types.contains("street_number")) {
+            streetNumber = component["long_name"];
+          }
+          if (types.contains("route")) {
+            route = component["long_name"];
+          }
+          if (types.contains("locality")) {
+            city = component["long_name"];
+          }
+          if (types.contains("administrative_area_level_1")) {
+            state = component["long_name"];
+          }
+          if (types.contains("country")) {
+            country = component["long_name"];
+          }
+        }
+
+        return {
+          "street": "$streetNumber $route".trim(),
+          "city": city,
+          "state": state,
+          "country": country,
+          "formattedAddress": result["formatted_address"],
+        };
       }
     }
-    return {"error": "Unknown Location"};
+      return {"error": "Unknown Location"};
   }
 
   /// Fetches coordinates (LatLng) from a place ID
@@ -111,14 +106,12 @@ class LocationApiService {
 
     String? response = await NetworkUtil.fetchUrl(uri);
     
-    if (response != null) {
-      final data = json.decode(response);
-      if (data["status"] == "OK") {
-        final location = data["result"]["geometry"]["location"];
-        return LatLng(location["lat"], location["lng"]);
-      }
+    final data = json.decode(response!);
+    if (data["status"] == "OK") {
+      final location = data["result"]["geometry"]["location"];
+      return LatLng(location["lat"], location["lng"]);
     }
-    return null;
+      return null;
   }
   
   /// Creates a formatted address string from address components

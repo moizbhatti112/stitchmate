@@ -3,14 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:gyde/core/constants/api_key.dart';
-import 'package:gyde/core/constants/colors.dart';
-import 'package:gyde/features/home/ground_transport/api_service/autocomplete_prediction.dart';
-import 'package:gyde/features/home/ground_transport/api_service/autocomplete_response.dart';
-import 'package:gyde/features/home/ground_transport/api_service/network_repo.dart';
-import 'package:gyde/features/home/ground_transport/viewmodels/booking_provider.dart';
-import 'package:gyde/features/home/ground_transport/views/custom_datepicker.dart';
-import 'package:gyde/features/home/ground_transport/views/time_picker.dart';
+import 'package:stitchmate/core/constants/api_key.dart';
+import 'package:stitchmate/core/constants/colors.dart';
+import 'package:stitchmate/features/home/ground_transport/api_service/autocomplete_prediction.dart';
+import 'package:stitchmate/features/home/ground_transport/api_service/autocomplete_response.dart';
+import 'package:stitchmate/features/home/ground_transport/api_service/network_repo.dart';
+import 'package:stitchmate/features/home/ground_transport/viewmodels/booking_provider.dart';
+import 'package:stitchmate/features/home/ground_transport/views/custom_datepicker.dart';
+import 'package:stitchmate/features/home/ground_transport/views/time_picker.dart';
 import 'package:provider/provider.dart';
 
 class LuxuryGroundTransportation extends StatefulWidget {
@@ -184,30 +184,19 @@ class _LuxuryGroundTransportationState extends State<LuxuryGroundTransportation>
   String? response = await NetworkUtil.fetchUrl(uri);
   debugPrint("API Response: $response");
 
-  if (response != null) {
-    try {
-      PlaceAutoCompleteResponse result =
-          PlaceAutoCompleteResponse.parseAutoCompleteResult(response);
+  try {
+    PlaceAutoCompleteResponse result =
+        PlaceAutoCompleteResponse.parseAutoCompleteResult(response!);
 
-      setState(() {
-        if (isDropoff) {
-          dropoffPlacePredictions = result.predictions;
-        } else {
-          placePredictions = result.predictions;
-        }
-      });
-    } catch (e) {
-      debugPrint("Error parsing autocomplete response: $e");
-      setState(() {
-        if (isDropoff) {
-          dropoffPlacePredictions = [];
-        } else {
-          placePredictions = [];
-        }
-      });
-    }
-  } else {
-    debugPrint("No response received.");
+    setState(() {
+      if (isDropoff) {
+        dropoffPlacePredictions = result.predictions;
+      } else {
+        placePredictions = result.predictions;
+      }
+    });
+  } catch (e) {
+    debugPrint("Error parsing autocomplete response: $e");
     setState(() {
       if (isDropoff) {
         dropoffPlacePredictions = [];

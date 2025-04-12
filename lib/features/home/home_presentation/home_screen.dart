@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:gyde/core/constants/colors.dart';
-import 'package:gyde/features/home/home_presentation/appbar.dart';
-import 'package:gyde/features/home/home_presentation/circular_menu.dart';
-import 'package:gyde/features/home/home_presentation/search_field.dart';
-import 'package:gyde/features/home/my_itinerary/views/my_itinerary.dart';
-import 'package:gyde/features/home/rewards/views/reward_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:stitchmate/core/constants/colors.dart';
+import 'package:stitchmate/features/authentication/viewmodels/auth_provider.dart';
+import 'package:stitchmate/features/home/home_presentation/appbar.dart';
+import 'package:stitchmate/features/home/home_presentation/circular_menu.dart';
+import 'package:stitchmate/features/home/home_presentation/search_field.dart';
+import 'package:stitchmate/features/home/my_itinerary/views/my_itinerary.dart';
+import 'package:stitchmate/features/home/rewards/views/reward_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,7 +19,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 0; // Track the selected index for the bottom navigation bar
+  int _selectedIndex =
+      0; // Track the selected index for the bottom navigation bar
 
   // List of navigator keys for each tab
   final List<GlobalKey<NavigatorState>> _navigatorKeys = [
@@ -27,16 +30,19 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
   // Cache SVG assets
   final Map<String, Widget> _svgCache = {};
-  
+
   @override
   void initState() {
     super.initState();
     _precacheAssets();
   }
-  
+
   Future<void> _precacheAssets() async {
+    // Use a local variable to reference the current context
+    final BuildContext currentContext = context;
+
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      // Precache SVG icons
+      // Precache SVG icons - this is synchronous so no mounted check needed here
       _cacheSvgAssets([
         'assets/icons/car.svg',
         'assets/icons/plane.svg',
@@ -45,37 +51,38 @@ class _HomeScreenState extends State<HomeScreen> {
         'assets/icons/planning.svg',
         'assets/icons/lock.svg',
       ]);
-      
-      // Precache other images used in the app
-      await _precacheImages();
+
+      // For the asynchronous precaching, check if still mounted
+      if (mounted) {
+        await _precacheImages(currentContext);
+      }
     });
   }
-  
-  void _cacheSvgAssets(List<String> assets) {
-    for (final asset in assets) {
-      if (!_svgCache.containsKey(asset)) {
-        _svgCache[asset] = SvgPicture.asset(
-          asset,
-          height: 32,
-          width: 32,
-        );
-      }
-    }
-  }
-  
-  Future<void> _precacheImages() async {
+
+  // Modified to accept context as a parameter
+  Future<void> _precacheImages(BuildContext currentContext) async {
     final imagesToPreload = [
       'assets/images/carimage.png',
-      'assets/images/Gyde Logo.png',
       'assets/icons/apple.png',
       'assets/icons/google.png',
       'assets/icons/fb.png',
     ];
-    
+
     for (final asset in imagesToPreload) {
-      await precacheImage(AssetImage(asset), context);
+      // Check if still mounted before each operation
+      if (!mounted) return;
+      await precacheImage(AssetImage(asset), currentContext);
     }
   }
+
+  void _cacheSvgAssets(List<String> assets) {
+    for (final asset in assets) {
+      if (!_svgCache.containsKey(asset)) {
+        _svgCache[asset] = SvgPicture.asset(asset, height: 32, width: 32);
+      }
+    }
+  }
+
   // Handle tap events on the bottom navigation bar
   void _onItemTapped(int index) {
     if (_selectedIndex == index) {
@@ -88,27 +95,83 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // Handle logout functionality
+  // In home_screen.dart, update the _handleLogout method:
+
+  void _handleLogout() async {
+     final sm = ScaffoldMessenger.of(context);
+    // Close the drawer first
+    Navigator.pop(context);
+
+    // Show loading indicator
+    final BuildContext dialogContext = context;
+    showDialog(
+      context: dialogContext,
+      barrierDismissible: false,
+      builder:
+          (BuildContext context) =>
+              const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+     
+      // Get auth provider
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+      // Sign out
+      await authProvider.signOut();
+
+      // Make sure we dismiss the dialog before navigation
+      if (context.mounted) {
+        // Pop the loading dialog first
+        Navigator.of(dialogContext).pop();
+
+        // Then navigate to login screen after ensuring the dialog is closed
+        Future.microtask(() {
+          if (mounted) {
+            Navigator.of(
+              context,
+            ).pushNamedAndRemoveUntil('/login', (route) => false);
+          }
+        });
+      }
+    } catch (e) {
+      
+      // Close loading indicator
+      if (context.mounted) {
+        Navigator.of(dialogContext).pop();
+
+        // Show error message
+        sm.showSnackBar(
+          SnackBar(content: Text('Error signing out: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
       canPop: _navigatorKeys[_selectedIndex].currentState?.canPop() ?? false,
-   onPopInvokedWithResult: (didPop, result) {
-  if (!didPop && _navigatorKeys[_selectedIndex].currentState!.canPop()) {
-    _navigatorKeys[_selectedIndex].currentState!.pop();
-  } else if (!didPop && _selectedIndex != 0) {
-    setState(() {
-      _selectedIndex = 0; // Go back to Home screen
-    });
-  } else if (!didPop && _selectedIndex == 0) {
-    // Exit the app if the user is on the Home tab
-    Future.delayed(Duration(milliseconds: 100), () {
-      SystemNavigator.pop();
-    });
-  }
-},
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && _navigatorKeys[_selectedIndex].currentState!.canPop()) {
+          _navigatorKeys[_selectedIndex].currentState!.pop();
+        } else if (!didPop && _selectedIndex != 0) {
+          setState(() {
+            _selectedIndex = 0; // Go back to Home screen
+          });
+        } else if (!didPop && _selectedIndex == 0) {
+          // Exit the app if the user is on the Home tab
+          Future.delayed(Duration(milliseconds: 100), () {
+            SystemNavigator.pop();
+          });
+        }
+      },
       child: SafeArea(
         child: Scaffold(
           backgroundColor: bgColor,
+          // Add drawer to the scaffold
+          drawer: _buildDrawer(),
           body: IndexedStack(
             index: _selectedIndex,
             children: [
@@ -126,10 +189,7 @@ class _HomeScreenState extends State<HomeScreen> {
             showSelectedLabels: true,
             showUnselectedLabels: true,
             items: const <BottomNavigationBarItem>[
-              BottomNavigationBarItem(
-                icon: Icon(Icons.home),
-                label: 'Home',
-              ),
+              BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
               BottomNavigationBarItem(
                 icon: FaIcon(FontAwesomeIcons.ticketSimple),
                 label: 'My Itinerary',
@@ -154,10 +214,70 @@ class _HomeScreenState extends State<HomeScreen> {
       },
     );
   }
+
+  // Create the drawer widget
+
+  // Updated _buildDrawer method
+  Widget _buildDrawer() {
+    // Get user info from AuthProvider
+    Provider.of<AuthProvider>(context, listen: false);
+
+    // Get user name from Supabase user metadata
+    // final userName = user?.userMetadata?['name'] ?? user?.email?.split('@').first ?? 'User';
+
+    return Drawer(
+      backgroundColor: bgColor,
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          UserAccountsDrawerHeader(
+            decoration: BoxDecoration(color: primaryColor),
+            accountName: Text(
+              '',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            accountEmail: Text(
+              '',
+              style: TextStyle(color: Colors.white, fontSize: 14),
+            ),
+          ),
+          _buildDrawerItem(Icons.person, 'Profile'),
+          _buildDrawerItem(Icons.settings, 'Settings'),
+          _buildDrawerItem(Icons.history, 'Trip History'),
+          _buildDrawerItem(Icons.payment, 'Payment Methods'),
+          _buildDrawerItem(Icons.support_agent, 'Support'),
+          Divider(color: lightgrey),
+          // Use _handleLogout for the Logout option
+          ListTile(
+            leading: Icon(Icons.logout, color: primaryColor),
+            title: Text(
+              'Logout',
+              style: TextStyle(fontSize: 16, color: blacktext),
+            ),
+            onTap: _handleLogout,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Helper method to create drawer items
+  Widget _buildDrawerItem(IconData icon, String title) {
+    return ListTile(
+      leading: Icon(icon, color: primaryColor),
+      title: Text(title, style: TextStyle(fontSize: 16, color: blacktext)),
+      onTap: () {
+        // Close the drawer
+        Navigator.pop(context);
+        // Add navigation logic here
+      },
+    );
+  }
 }
-
-
-
 
 // Home screen content (moved to a separate widget)
 class HomeContent extends StatelessWidget {
@@ -185,7 +305,10 @@ class HomeContent extends StatelessWidget {
                     CircularMenu(
                       child: _loadSvg('assets/icons/car.svg'),
                       onpress: () {
-                        Navigator.of(context, rootNavigator: true).pushNamed('/luxurywelcome');
+                        Navigator.of(
+                          context,
+                          rootNavigator: true,
+                        ).pushNamed('/luxurywelcome');
                       },
                     ),
                     CircularMenu(
@@ -259,10 +382,6 @@ class HomeContent extends StatelessWidget {
 
   // ✅ SVG Loader
   Widget _loadSvg(String asset) {
-    return SvgPicture.asset(
-      asset,
-      height: 32,
-      width: 32,
-    );
+    return SvgPicture.asset(asset, height: 32, width: 32);
   }
 }

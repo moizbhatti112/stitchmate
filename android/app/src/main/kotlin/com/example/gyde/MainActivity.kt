@@ -1,4 +1,4 @@
-package com.example.gyde
+package com.example.stitchmate
 
 import io.flutter.embedding.android.FlutterActivity
 

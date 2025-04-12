@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:gyde/core/constants/colors.dart';
-import 'package:gyde/features/home/ground_transport/api_service/autocomplete_prediction.dart';
-import 'package:gyde/features/home/ground_transport/api_service/location_api_service.dart';
-import 'package:gyde/features/home/ground_transport/viewmodels/location_service.dart';
+import 'package:stitchmate/core/constants/colors.dart';
+import 'package:stitchmate/features/home/ground_transport/api_service/autocomplete_prediction.dart';
+import 'package:stitchmate/features/home/ground_transport/api_service/location_api_service.dart';
+import 'package:stitchmate/features/home/ground_transport/viewmodels/location_service.dart';
  // Import the new service
 
 class LocationInput extends StatefulWidget {
@@ -635,20 +635,18 @@ class _LocationInputState extends State<LocationInput> with WidgetsBindingObserv
                     placePredictions[index].placeId,
                   );
 
-                  if (selectedLatLng != null) {
-                    setState(() {
-                      widget.controller.text =
-                          placePredictions[index].description;
-                      placePredictions = [];
-                      isSuggestionSelected = true;
-                    });
+                  setState(() {
+                    widget.controller.text =
+                        placePredictions[index].description;
+                    placePredictions = [];
+                    isSuggestionSelected = true;
+                  });
 
-                    widget.onLocationSelected?.call(selectedLatLng);
-                    if(context.mounted) {
-                      FocusScope.of(context).unfocus();
-                    }
+                  widget.onLocationSelected?.call(selectedLatLng!);
+                  if(context.mounted) {
+                    FocusScope.of(context).unfocus();
                   }
-                },
+                                },
               ),
               if (index < placePredictions.length - 1)
                 Divider(),

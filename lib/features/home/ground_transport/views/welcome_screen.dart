@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:gyde/core/constants/colors.dart';
-import 'package:gyde/core/widgets/mybutton.dart';
+import 'package:stitchmate/core/constants/colors.dart';
+import 'package:stitchmate/core/widgets/mybutton.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});

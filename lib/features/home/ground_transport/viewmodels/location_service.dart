@@ -6,9 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter/services.dart';
-import 'package:gyde/core/constants/api_key.dart';
-import 'package:gyde/core/constants/colors.dart';
-import 'package:gyde/features/home/ground_transport/models/direction_model.dart';
+import 'package:stitchmate/core/constants/api_key.dart';
+import 'package:stitchmate/core/constants/colors.dart';
+import 'package:stitchmate/features/home/ground_transport/models/direction_model.dart';
 import 'package:http/http.dart' as http;
 
 class LocationService {
@@ -24,7 +24,7 @@ class LocationService {
   bool _isLoading = true;
   bool _mapInitialized = false;
   String _mapStyle = "";
-  LatLng _currentPosition = const LatLng(0, 0); // Default Location
+  LatLng _currentPosition = const LatLng(130, 120); // Default Location
   final Set<Polyline> _polylines = {};
   Set<Polyline> get polylines => _polylines;
   // Getters
@@ -136,10 +136,45 @@ Future<void> getRoutePolyline(LatLng pickup, LatLng dropoff) async {
   }
 
   /////////////////////////////////////////////////////////////////////////////
-  Future<void> initialize() async {
+Future<bool> initialize() async {
+  try {
     await _loadMapStyle();
-    await getCurrentLocation();
+    
+    // Check if location services are enabled
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      // Location services are not enabled
+      _isLoading = false;
+      return false;
+    }
+
+    // First, check current permission status
+    var permission = await Geolocator.checkPermission();
+    
+    // If permission is denied, request it immediately
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        _isLoading = false;
+        return false;
+      }
+    }
+    
+    // If permission is permanently denied, we can't request again
+    // but we should return false to show the proper UI
+    if (permission == LocationPermission.deniedForever) {
+      _isLoading = false;
+      return false;
+    }
+    
+    // Permission is granted, get the current location
+    bool locationObtained = await getCurrentLocation();
+    return locationObtained;
+  } catch (e) {
+    debugPrint("Error initializing location service: $e");
+    return false;
   }
+}
 
   void dispose() {
     if (_mapInitialized) {
@@ -233,75 +268,61 @@ Future<void> getRoutePolyline(LatLng pickup, LatLng dropoff) async {
 
   ///////////////////////////////////////////////////////////////////////////////////////////
   // Get Current Location and Add Marker
-  Future<void> getCurrentLocation() async {
-    const locationSettings = LocationSettings(
-      accuracy: LocationAccuracy.high,
-      distanceFilter: 10,
-      timeLimit: Duration(seconds: 10),
+Future<bool> getCurrentLocation() async {
+  const locationSettings = LocationSettings(
+    accuracy: LocationAccuracy.high,
+    distanceFilter: 10,
+    timeLimit: Duration(seconds: 10),
+  );
+
+  try {
+    final position = await Geolocator.getCurrentPosition(
+      locationSettings: locationSettings,
     );
 
-    try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        _isLoading = false;
-        await Geolocator.requestPermission();
-        return;
-      }
+    _currentPosition = LatLng(position.latitude, position.longitude);
+    _isLoading = false;
 
-      var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          _isLoading = false;
-          await Geolocator.requestPermission();
-        }
-      }
+    updateMarkers();
 
-      if (permission == LocationPermission.deniedForever) {
-        _isLoading = false;
-        await Geolocator.requestPermission();
-      }
-
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: locationSettings,
+    if (_mapInitialized) {
+      _mapController.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(target: _currentPosition, zoom: 15),
+        ),
       );
-
-      _currentPosition = LatLng(position.latitude, position.longitude);
-      _isLoading = false;
-
-      updateMarkers(); // 🔥 Update the markers
-
-      if (_mapInitialized) {
-        _mapController.animateCamera(
-          CameraUpdate.newCameraPosition(
-            CameraPosition(target: _currentPosition, zoom: 15),
-          ),
+      onLocationUpdated?.call();
+    }
+    return true;
+  } catch (e) {
+    // If high accuracy times out, try with lower accuracy
+    if (e is TimeoutException) {
+      try {
+        const locationSett = LocationSettings(
+          accuracy: LocationAccuracy.medium,
+          distanceFilter: 10,
+          timeLimit: Duration(seconds: 5),
         );
-        onLocationUpdated?.call();
-        updateMarkers();
-      }
-    } catch (e) {
-      // If high accuracy times out, try with lower accuracy
-      if (e is TimeoutException) {
-        try {
-          const locationSett = LocationSettings(
-            accuracy: LocationAccuracy.medium,
-            distanceFilter: 10,
-            timeLimit: Duration(seconds: 5),
-          );
-          Position position = await Geolocator.getCurrentPosition(
-            locationSettings: locationSett,
-          );
+        Position position = await Geolocator.getCurrentPosition(
+          locationSettings: locationSett,
+        );
 
-          _currentPosition = LatLng(position.latitude, position.longitude);
-        } catch (fallbackError) {
-          rethrow;
-        }
-      } else {
-        rethrow;
+        _currentPosition = LatLng(position.latitude, position.longitude);
+        _isLoading = false;
+        updateMarkers();
+        return true;
+      } catch (fallbackError) {
+        debugPrint("Location fallback error: $fallbackError");
+        _isLoading = false;
+        return false;
       }
+    } else {
+      debugPrint("Location error: $e");
+      _isLoading = false;
+      return false;
     }
   }
+}
 
   ///////////////////////////////////////////////////////////////////////////////////////////
   // Zoom to Current Location

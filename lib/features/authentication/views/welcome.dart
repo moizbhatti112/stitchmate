@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:gyde/core/constants/colors.dart';
-import 'package:gyde/core/widgets/mybutton.dart';
+import 'package:stitchmate/core/constants/colors.dart';
+import 'package:stitchmate/core/widgets/mybutton.dart';
 
 class Welcome extends StatelessWidget {
   const Welcome({super.key});
@@ -45,7 +45,7 @@ class Welcome extends StatelessWidget {
             MyButton(
               text: "Continue",
               onPressed: () {
-                Navigator.pushNamed(context, '/enteremail');
+                Navigator.pushNamed(context, '/profilescreen');
               },
             ),
           ],

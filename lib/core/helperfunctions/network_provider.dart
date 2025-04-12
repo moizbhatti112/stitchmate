@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:gyde/core/constants/colors.dart';
+import 'package:stitchmate/core/constants/colors.dart';
 import 'package:provider/provider.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'dart:async';

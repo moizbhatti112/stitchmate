@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:gyde/core/constants/colors.dart';
-import 'package:gyde/features/authentication/views/enter_code.dart';
+import 'package:stitchmate/core/constants/colors.dart';
 
 class AddPhone extends StatefulWidget {
   const AddPhone({super.key});
@@ -141,20 +140,7 @@ class _AddPhoneState extends State<AddPhone> {
                           ),
                           onPressed: isButtonEnabled
                               ? () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => EnterCode(
-                                        number: _phoneController.text,
-                                      ),
-                                    ),
-                                  ).then((_) {
-                                    // Reset button state when coming back
-                                    setState(() {
-                                      isButtonEnabled =
-                                          _phoneController.text.length >= 10;
-                                    });
-                                  });
+                                 
                               
                                 }
                               : null,

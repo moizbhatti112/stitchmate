@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:gyde/core/constants/colors.dart';
+import 'package:stitchmate/core/constants/colors.dart';
 
 class SocialmediaButton extends StatefulWidget {
   final String path;
@@ -21,21 +21,18 @@ class _SocialmediaButtonState extends State<SocialmediaButton> {
     final size = MediaQuery.sizeOf(context);
     final orientation = MediaQuery.orientationOf(context);
 
-    // ✅ Button size adjust hoga according to orientation
-    double buttonWidth = orientation == Orientation.portrait
-        ? size.width * 0.3
-        : size.width * 0.29;
+    double buttonHeight =
+        orientation == Orientation.portrait
+            ? size.height * 0.067
+            : size.height * 0.16;
 
-    double buttonHeight = orientation == Orientation.portrait
-        ? size.height * 0.067
-        : size.height * 0.16;
-
-    double iconSize = orientation == Orientation.portrait
-        ? size.width * 0.08
-        : size.width * 0.05; // ✅ Smaller icon in landscape
+    double iconSize =
+        orientation == Orientation.portrait
+            ? size.width * 0.08
+            : size.width * 0.05; // ✅ Smaller icon in landscape
 
     return SizedBox(
-      width: buttonWidth,
+      width: double.infinity,
       height: buttonHeight,
       child: ElevatedButton(
         onPressed: widget.onPressed,
@@ -46,10 +43,20 @@ class _SocialmediaButtonState extends State<SocialmediaButton> {
             side: BorderSide(color: primaryColor, width: 1),
           ),
         ),
-        child: Image.asset(
-          widget.path,
-          width: iconSize,
-          height: iconSize,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(widget.path, width: iconSize, height: iconSize),
+            Text(
+              'Continue with Google',
+              style: TextStyle(
+                fontSize: 16,
+                fontFamily: 'ppneuemontreal-thin',
+                fontWeight: FontWeight.w600,
+                color: primaryColor,
+              ),
+            ),
+          ],
         ),
       ),
     );

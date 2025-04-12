@@ -1,6 +1,6 @@
 // choose_vehicle_provider.dart (ViewModel)
 import 'package:flutter/material.dart';
-import 'package:gyde/features/home/ground_transport/models/car_type.dart';
+import 'package:stitchmate/features/home/ground_transport/models/car_type.dart';
 
 class ChooseVehicleProvider extends ChangeNotifier {
    String? selectedCar;

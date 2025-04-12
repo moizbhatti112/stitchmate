@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:gyde/core/constants/colors.dart';
-import 'package:gyde/core/widgets/mybutton.dart';
-import 'package:gyde/features/home/ground_transport/viewmodels/booking_provider.dart';
-import 'package:gyde/features/home/ground_transport/viewmodels/location_service.dart';
-import 'package:gyde/features/home/ground_transport/viewmodels/route_provider.dart';
+import 'package:stitchmate/core/constants/colors.dart';
+import 'package:stitchmate/core/widgets/mybutton.dart';
+import 'package:stitchmate/features/home/ground_transport/viewmodels/booking_provider.dart';
+import 'package:stitchmate/features/home/ground_transport/viewmodels/location_service.dart';
+import 'package:stitchmate/features/home/ground_transport/viewmodels/route_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -24,6 +24,7 @@ class _BookingConfirmationState extends State<BookingConfirmation> {
   LocationService _locationService = LocationService();
   bool _isMapLoading = true;
   GoogleMapController? _mapController;
+  bool _markersLoaded = false;
   
   @override
   void initState() {
@@ -41,55 +42,47 @@ class _BookingConfirmationState extends State<BookingConfirmation> {
       const SystemUiOverlayStyle(statusBarColor: Colors.transparent),
     );
 
-    // Initialize location service and load custom markers
-    Future.delayed(Duration.zero, () async {
-      await _locationService.initialize();
+    // Preload both markers and initialize location service before showing map
+    _preloadResources();
+  }
 
-      // Load marker icons
-      Future.wait([
-        BitmapDescriptor.asset(
-          ImageConfiguration(size: Size(40, 40)),
-          "assets/icons/pickg.png",
-        ).then((icon) {
-          if (mounted) {
-            setState(() {
-              markerIcon = icon;
-              _locationService.setCustomMarkerIcon(markerIcon);
-            });
-          }
-        }),
-        BitmapDescriptor.asset(
-          ImageConfiguration(size: Size(40, 40)),
-          "assets/icons/dropg.png",
-        ).then((icon) {
-          if (mounted) {
-            setState(() {
-              dropoffMarkerIcon = icon;
-            });
-          }
-        }),
-      ]);
-      
-      // Update map view after everything is loaded
+  Future<void> _preloadResources() async {
+    // Load both markers in parallel
+    final markersFuture = Future.wait([
+      BitmapDescriptor.asset(
+        ImageConfiguration(size: Size(40, 40)),
+        "assets/icons/pickg.png",
+      ),
+      BitmapDescriptor.asset(
+        ImageConfiguration(size: Size(40, 40)),
+        "assets/icons/dropg.png",
+      ),
+    ]);
+
+    // Initialize location service
+    final locationFuture = _locationService.initialize();
+
+    // Wait for both operations to complete
+    await Future.wait([markersFuture, locationFuture]);
+
+    // Set markers once loaded
+    if (mounted) {
+      final markers = await markersFuture;
+      setState(() {
+        markerIcon = markers[0];
+        dropoffMarkerIcon = markers[1];
+        _markersLoaded = true;
+        _isMapLoading = false;
+        _locationService.setCustomMarkerIcon(markerIcon);
+      });
+
+      // Update map with markers after a small delay to ensure map is ready
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _updateMapView();
       });
-    });
-    
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
-        setState(() {
-          _isMapLoading = false;
-        });
-      }
-    });
+    }
   }
-//   @override
-// dispose() {
-//     _locationService.dispose();
-//     _mapController?.dispose();
-//     super.dispose();
-//   }
+
   // Function to update map view to include both markers
   void _updateMapView() {
     final routeProvider = Provider.of<RouteProvider>(context, listen: false);
@@ -128,12 +121,12 @@ class _BookingConfirmationState extends State<BookingConfirmation> {
     final LatLng? dropoff = routeProvider.dropoffLocation;
     final size = MediaQuery.sizeOf(context);
 
-    // Set up markers and polyline if both pickup and dropoff locations are available
-    if (pickup != null && dropoff != null) {
+    // Only setup markers if both custom markers and locations are loaded
+    if (_markersLoaded && pickup != null && dropoff != null) {
       // Clear previous markers
       _locationService.markers.clear();
 
-      // Add pickup marker
+      // Add pickup marker with custom icon
       _locationService.markers.add(
         Marker(
           markerId: const MarkerId("current_location"),
@@ -143,7 +136,7 @@ class _BookingConfirmationState extends State<BookingConfirmation> {
         ),
       );
 
-      // Add dropoff marker
+      // Add dropoff marker with custom icon
       _locationService.markers.add(
         Marker(
           markerId: const MarkerId("dropoff_location"),
@@ -168,44 +161,39 @@ class _BookingConfirmationState extends State<BookingConfirmation> {
     return Scaffold(
       body: Stack(
         children: [
+          // Only show map when markers are ready, otherwise show loading state
           Positioned.fill(
-            child: Stack(
-              children: [
-                GoogleMap(
-                  markers: Set<Marker>.from(_locationService.markers),
-                  polylines: _locationService.polylines,
-                  initialCameraPosition: CameraPosition(
-                    // Using center point between pickup and dropoff if available
-                    target: (pickup != null && dropoff != null) 
-                        ? LatLng(
-                            (pickup.latitude + dropoff.latitude) / 2,
-                            (pickup.longitude + dropoff.longitude) / 2)
-                        : pickup ?? LatLng(37.7749, -122.4194),
-                    zoom: 12, // Zoom out a bit to potentially show both locations
-                  ),
-                  onMapCreated: (GoogleMapController controller) {
-                    _mapController = controller;
-                    _locationService.onMapCreated(controller);
-                    
-                    // Wait a moment for the map to initialize properly before updating view
-                    Future.delayed(Duration(milliseconds: 300), () {
-                      _updateMapView();
-                    });
-                  },
-                  style: _locationService.mapStyle.isEmpty
-                      ? null
-                      : _locationService.mapStyle,
+            child: _isMapLoading ? 
+              Shimmer.fromColors(
+                baseColor: Colors.grey[300]!,
+                highlightColor: Colors.grey[100]!,
+                child: Container(color: Colors.white),
+              ) : 
+              GoogleMap(
+                markers: Set<Marker>.from(_locationService.markers),
+                polylines: _locationService.polylines,
+                initialCameraPosition: CameraPosition(
+                  // Using center point between pickup and dropoff if available
+                  target: (pickup != null && dropoff != null) 
+                      ? LatLng(
+                          (pickup.latitude + dropoff.latitude) / 2,
+                          (pickup.longitude + dropoff.longitude) / 2)
+                      : pickup ?? LatLng(37.7749, -122.4194),
+                  zoom: 12, // Zoom out a bit to potentially show both locations
                 ),
-                if (_isMapLoading)
-                  Positioned.fill(
-                    child: Shimmer.fromColors(
-                      baseColor: Colors.grey[300]!,
-                      highlightColor: Colors.grey[100]!,
-                      child: Container(color: Colors.white),
-                    ),
-                  ),
-              ],
-            ),
+                onMapCreated: (GoogleMapController controller) {
+                  _mapController = controller;
+                  _locationService.onMapCreated(controller);
+                  
+                  // Wait a moment for the map to initialize properly before updating view
+                  Future.delayed(Duration(milliseconds: 300), () {
+                    _updateMapView();
+                  });
+                },
+                style: _locationService.mapStyle.isEmpty
+                    ? null
+                    : _locationService.mapStyle,
+              ),
           ),
           // The rest of your UI remains unchanged
           DraggableScrollableSheet(

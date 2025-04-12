@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:gyde/core/constants/colors.dart';
+import 'package:stitchmate/core/constants/colors.dart';
 
 class MyItinerary extends StatelessWidget {
   const MyItinerary({super.key});

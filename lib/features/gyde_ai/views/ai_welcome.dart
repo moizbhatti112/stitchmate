@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:gyde/core/constants/colors.dart';
+import 'package:stitchmate/core/constants/colors.dart';
 
 class AiWelcome extends StatelessWidget {
   final String name;
@@ -29,7 +29,7 @@ class AiWelcome extends StatelessWidget {
             ),
             SizedBox(height: size.height * 0.01),
             Text(
-              'Welcome to Gyde. Please select your \n          personalized experience.',
+              'Welcome to Stitchmate. Please press continue \n                          for AI experience',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
@@ -37,7 +37,7 @@ class AiWelcome extends StatelessWidget {
                 color: grey,
               ),
             ),
-            SizedBox(height: size.height * 0.3),
+            SizedBox(height: size.height * 0.35),
             GestureDetector(
               onTap: () =>    Navigator.pushNamed(context, '/homescreen'),
               child: Container(
@@ -69,34 +69,34 @@ class AiWelcome extends StatelessWidget {
                 ),
               ),
             ),
-            SizedBox(height: size.height * 0.01), //  2nd button ////
-            GestureDetector(
-              onTap: () {
+            // SizedBox(height: size.height * 0.01), //  2nd button ////
+            // GestureDetector(
+            //   onTap: () {
              
-                debugPrint('AI Experience');
-              },
-              child: Container(
-                width: double.infinity,
-                height: size.height * 0.07,
-                decoration: BoxDecoration(
-                  color: secondaryColor,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: primaryColor, width: 2),
-                ),
-                margin: EdgeInsets.symmetric(horizontal: size.width * 0.03),
-                child: Center(
-                  child: Text(
-                    'Analog Experience',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: primaryColor,
-                      fontFamily: 'HelveticaNeueMedium',
-                    ),
-                  ),
-                ),
-              ),
-            ),
+            //     debugPrint('AI Experience');
+            //   },
+            //   child: Container(
+            //     width: double.infinity,
+            //     height: size.height * 0.07,
+            //     decoration: BoxDecoration(
+            //       color: secondaryColor,
+            //       borderRadius: BorderRadius.circular(12),
+            //       border: Border.all(color: primaryColor, width: 2),
+            //     ),
+            //     margin: EdgeInsets.symmetric(horizontal: size.width * 0.03),
+            //     child: Center(
+            //       child: Text(
+            //         'Analog Experience',
+            //         style: TextStyle(
+            //           fontSize: 16,
+            //           fontWeight: FontWeight.w700,
+            //           color: primaryColor,
+            //           fontFamily: 'HelveticaNeueMedium',
+            //         ),
+            //       ),
+            //     ),
+            //   ),
+            // ),
           ],
         ),
       ),

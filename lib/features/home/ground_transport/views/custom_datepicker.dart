@@ -1,5 +1,5 @@
  import 'package:flutter/material.dart';
-import 'package:gyde/core/constants/colors.dart';
+import 'package:stitchmate/core/constants/colors.dart';
  void showCustomDatePicker(BuildContext context, TextEditingController controller) {
   // Start with the current date
   DateTime currentDate = DateTime.now();

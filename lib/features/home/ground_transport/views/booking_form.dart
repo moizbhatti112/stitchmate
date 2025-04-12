@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:gyde/core/constants/colors.dart';
-import 'package:gyde/features/home/ground_transport/views/one_way_form.dart';
-import 'package:gyde/features/home/ground_transport/views/hourly_form.dart';
+import 'package:stitchmate/core/constants/colors.dart';
+import 'package:stitchmate/features/home/ground_transport/views/one_way_form.dart';
+import 'package:stitchmate/features/home/ground_transport/views/hourly_form.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class BookingForm extends StatefulWidget {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:gyde/core/constants/colors.dart';
-import 'package:gyde/core/widgets/mybutton.dart';
-import 'package:gyde/core/widgets/socialmedia_button.dart';
+import 'package:stitchmate/core/constants/colors.dart';
+import 'package:stitchmate/core/widgets/mybutton.dart';
+// import 'package:stitchmate/core/widgets/socialmedia_button.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -63,11 +63,7 @@ class _SignupContent extends StatelessWidget {
               ),
               SizedBox(height: size.height * (isPortrait ? 0.04 : 0.03)),
 
-              // Logo
-              Image.asset(
-                'assets/images/Gyde Logo.png',
-                width: isPortrait ? size.width * 0.3 : size.width * 0.2,
-              ),
+          
               SizedBox(height: size.height * (isPortrait ? 0.04 : 0.03)),
 
               // Tagline
@@ -86,34 +82,21 @@ class _SignupContent extends StatelessWidget {
 
               // Buttons
               MyButton(
-                text: 'Continue With Phone',
+                text: 'Continue ',
                 onPressed: () {
-                  Navigator.pushNamed(context, '/addphone');
+                  Navigator.pushNamed(context, '/enteremail');
                 },
               ),
               SizedBox(height: isPortrait ? size.height * 0.01 : size.height * 0.04),
               
               // Social Media Buttons
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 15),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    SocialmediaButton(
-                      path: 'assets/icons/apple.png',
-                      onPressed: () {},
-                    ),
-                    SocialmediaButton(
-                      path: 'assets/icons/google.png',
-                      onPressed: () {},
-                    ),
-                    SocialmediaButton(
-                      path: 'assets/icons/fb.png',
-                      onPressed: () {},
-                    ),
-                  ],
-                ),
-              ),
+              // Padding(
+              //   padding: const EdgeInsets.symmetric(horizontal: 15),
+              //   child: SocialmediaButton(
+              //     path: 'assets/icons/google.png',
+              //     onPressed: () {},
+              //   ),
+              // ),
 
               SizedBox(height: size.height * (isPortrait ? 0.04 : 0.02)),
 

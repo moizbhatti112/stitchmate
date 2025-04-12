@@ -1,25 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:gyde/core/constants/colors.dart';
+import 'package:provider/provider.dart';
+import 'package:stitchmate/core/constants/colors.dart';
+
+import 'package:stitchmate/features/authentication/viewmodels/auth_provider.dart';
 
 class EnterCode extends StatefulWidget {
-  final String number;
-  const EnterCode({super.key, required this.number});
+  final String email;
+  const EnterCode({super.key, required this.email});
 
-  @override
+  @override 
   State<EnterCode> createState() => _EnterCodeState();
 }
 
 class _EnterCodeState extends State<EnterCode> {
   final TextEditingController _codeController = TextEditingController();
   bool isButtonEnabled = false;
+  bool _isVerifying = false;
+  String? _errorMessage;
 
-  void _checkPhoneNumber(String value) {
+  void _checkCode(String value) {
     if (value.length == 6) {
       if (!isButtonEnabled) {
         // Ensure state only updates once
         setState(() {
           isButtonEnabled = true;
+          _errorMessage = null;
         });
       }
     } else {
@@ -28,6 +34,43 @@ class _EnterCodeState extends State<EnterCode> {
           isButtonEnabled = false;
         });
       }
+    }
+  }
+
+  Future<void> _verifyCode() async {
+    if (!isButtonEnabled || _isVerifying) return;
+
+    setState(() {
+      _isVerifying = true;
+      _errorMessage = null;
+    });
+
+    try {
+      // Using the provider to verify OTP (which will now also create the user record)
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final result = await authProvider.verifyOTP(
+        email: widget.email,
+        otp: _codeController.text.trim(),
+      );
+
+      if (result == 'success') {
+        // Navigate to profile screen
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, '/profilescreen');
+        }
+      } else {
+        setState(() {
+          _errorMessage = result ?? 'Verification failed. Please try again.';  
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Error: ${e.toString()}';
+      });
+    } finally {
+      setState(() {
+        _isVerifying = false;
+      });
     }
   }
 
@@ -80,7 +123,7 @@ class _EnterCodeState extends State<EnterCode> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 9),
                       child: Text(
-                        'We sent verification code to your phone number',
+                        'We sent verification code to your Email',
                         style: TextStyle(
                           fontSize: 16,
                           fontFamily: 'HelveticaNeueMedium',
@@ -92,7 +135,7 @@ class _EnterCodeState extends State<EnterCode> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 9),
                       child: Text(
-                        '+${widget.number}',
+                        widget.email,
                         style: TextStyle(
                           fontSize: 16,
                           fontFamily: 'HelveticaNeueMedium',
@@ -108,33 +151,75 @@ class _EnterCodeState extends State<EnterCode> {
                       child: TextFormField(
                         controller: _codeController,
                         keyboardType: TextInputType.number,
-                        onChanged: _checkPhoneNumber,
-                        maxLength: 6, // OTP ke liye 6 digits
-                        textAlign:
-                            TextAlign.center, // Cursor ko start per set karega
-                        textDirection:
-                            TextDirection
-                                .ltr, // Left-to-right direction enforce karega
+                        onChanged: _checkCode,
+                        maxLength: 6,
+                        textAlign: TextAlign.center,
+                        textDirection: TextDirection.ltr,
                         style: TextStyle(letterSpacing: 40),
                         decoration: InputDecoration(
                           filled: true,
                           fillColor: phonefieldColor,
-                          hintText: "―  ―  ―  ―  ―  ― ", // Using Horizontal Bar
+                          hintText: "―  ―  ―  ―  ―  ― ",
                           hintStyle: TextStyle(
-                            fontSize:
-                                22, // Font size thoda bada taake bar prominent ho
+                            fontSize: 22,
                             fontWeight: FontWeight.w500,
                             color: phonefieldtext,
-                            letterSpacing: 10, // Aur bhi spacing add ki gayi
+                            letterSpacing: 10,
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide.none,
                           ),
-                          counterText: "", // Hide default counter
+                          counterText: "",
+                          errorText: _errorMessage,
                         ),
                       ),
                     ),
+
+                    // Display resend code option
+                    if (_errorMessage != null)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 9,
+                          vertical: 8,
+                        ),
+                        child: GestureDetector(
+                          onTap: () async {
+                            final scfmsngr = ScaffoldMessenger.of(context);
+                            try {
+                              final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                              await authProvider.signUpWithEmail(
+                                email: widget.email,
+                                password: '', // We don't need the password again
+                              );
+                              
+                              scfmsngr.showSnackBar(
+                                SnackBar(
+                                  content: Text('New verification code sent'),
+                                ),
+                              );
+                            } catch (e) {
+                              scfmsngr.showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Failed to resend code: ${e.toString()}',
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+                          child: Text(
+                            'Resend verification code',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: primaryColor,
+                              fontWeight: FontWeight.w500,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ),
+                      ),
+
                     SizedBox(height: size.height * 0.09),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 5),
@@ -150,18 +235,23 @@ class _EnterCodeState extends State<EnterCode> {
                               borderRadius: BorderRadius.circular(16),
                             ),
                           ),
-                          onPressed: isButtonEnabled ? () {
-                            Navigator.pushReplacementNamed(context, '/welcome');
-                              _codeController.clear();
-                          } : null,
-                          child: Text(
-                            'Next',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              color: isButtonEnabled ? Colors.white : nexttext,
-                            ),
-                          ),
+                          onPressed: isButtonEnabled ? _verifyCode : null,
+                          child:
+                              _isVerifying
+                                  ? CircularProgressIndicator(
+                                    color: Colors.white,
+                                  )
+                                  : Text(
+                                    'Next',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                      color:
+                                          isButtonEnabled
+                                              ? Colors.white
+                                              : nexttext,
+                                    ),
+                                  ),
                         ),
                       ),
                     ),

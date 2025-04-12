@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:gyde/core/constants/colors.dart';
-import 'package:gyde/features/home/ground_transport/views/custom_datepicker.dart';
-import 'package:gyde/features/home/ground_transport/views/time_picker.dart';
+import 'package:stitchmate/core/constants/colors.dart';
+import 'package:stitchmate/features/home/ground_transport/views/custom_datepicker.dart';
+import 'package:stitchmate/features/home/ground_transport/views/time_picker.dart';
 
 class DateTimeSelector extends StatelessWidget {
   final TextEditingController dateController;
