@@ -57,6 +57,9 @@ dependencies:
   email_validator: ^3.0.0
   path: ^1.9.1
   cached_network_image: ^3.4.1
+  dash_chat_2: ^0.0.21
+  share_plus: ^10.1.4
+  google_generative_ai: ^0.4.6
   
 dev_dependencies:
   vector_graphics_compiler: ^1.1.16

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:stitchmate/core/constants/colors.dart';
 
 class AiWelcome extends StatelessWidget {
-  final String name;
-  const AiWelcome({super.key, required this.name});
+ 
+  const AiWelcome({super.key, });
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +19,7 @@ class AiWelcome extends StatelessWidget {
             Center(child: Image.asset('assets/images/circlestar.png')),
             SizedBox(height: size.height * 0.02),
             Text(
-              'Hi, $name!',
+              'Hi !',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w700,
@@ -29,7 +29,7 @@ class AiWelcome extends StatelessWidget {
             ),
             SizedBox(height: size.height * 0.01),
             Text(
-              'Welcome to Stitchmate. Please press continue \n                          for AI experience',
+              'Please continue for AI experience',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
@@ -39,7 +39,7 @@ class AiWelcome extends StatelessWidget {
             ),
             SizedBox(height: size.height * 0.35),
             GestureDetector(
-              onTap: () =>    Navigator.pushNamed(context, '/homescreen'),
+              onTap: () =>    Navigator.pushNamed(context, '/chatscreen'),
               child: Container(
                 height: size.height * 0.07,
                 width: double.infinity,
@@ -69,34 +69,7 @@ class AiWelcome extends StatelessWidget {
                 ),
               ),
             ),
-            // SizedBox(height: size.height * 0.01), //  2nd button ////
-            // GestureDetector(
-            //   onTap: () {
-             
-            //     debugPrint('AI Experience');
-            //   },
-            //   child: Container(
-            //     width: double.infinity,
-            //     height: size.height * 0.07,
-            //     decoration: BoxDecoration(
-            //       color: secondaryColor,
-            //       borderRadius: BorderRadius.circular(12),
-            //       border: Border.all(color: primaryColor, width: 2),
-            //     ),
-            //     margin: EdgeInsets.symmetric(horizontal: size.width * 0.03),
-            //     child: Center(
-            //       child: Text(
-            //         'Analog Experience',
-            //         style: TextStyle(
-            //           fontSize: 16,
-            //           fontWeight: FontWeight.w700,
-            //           color: primaryColor,
-            //           fontFamily: 'HelveticaNeueMedium',
-            //         ),
-            //       ),
-            //     ),
-            //   ),
-            // ),
+          
           ],
         ),
       ),

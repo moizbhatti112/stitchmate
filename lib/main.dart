@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:stitchmate/core/helperfunctions/network_provider.dart';
+import 'package:stitchmate/features/ai_planner/viewmodels/chat_viewmodel.dart';
+import 'package:stitchmate/features/ai_planner/views/chat_screen.dart';
 import 'package:stitchmate/features/authentication/viewmodels/auth_provider.dart';
 
 import 'package:stitchmate/features/authentication/views/add_phone.dart';
@@ -62,6 +64,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => BookingProvider()),
         ChangeNotifierProvider(create: (_) => RouteProvider()),
         ChangeNotifierProvider(create: (_) => NetworkProvider()),
+         ChangeNotifierProvider(create: (_) => ChatViewModel()),
       ],
       child: const MyApp(),
     ),
@@ -124,6 +127,7 @@ class MyApp extends StatelessWidget {
         '/luxurywelcome': (context) => const WelcomeScreen(),
         '/choosevehicle': (context) => const ChooseVehicle(),
         '/bookingconfirmation': (context) => const BookingConfirmation(),
+        '/chatscreen': (context) => const ChatScreen(),
       },
     );
   }

@@ -4,6 +4,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:stitchmate/core/constants/colors.dart';
+import 'package:stitchmate/features/ai_planner/views/ai_welcome.dart';
 import 'package:stitchmate/features/authentication/viewmodels/auth_provider.dart';
 import 'package:stitchmate/features/home/home_presentation/appbar.dart';
 import 'package:stitchmate/features/home/home_presentation/circular_menu.dart';
@@ -99,7 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // In home_screen.dart, update the _handleLogout method:
 
   void _handleLogout() async {
-     final sm = ScaffoldMessenger.of(context);
+    final sm = ScaffoldMessenger.of(context);
     // Close the drawer first
     Navigator.pop(context);
 
@@ -114,7 +115,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     try {
-     
       // Get auth provider
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
@@ -136,7 +136,6 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       }
     } catch (e) {
-      
       // Close loading indicator
       if (context.mounted) {
         Navigator.of(dialogContext).pop();
@@ -245,11 +244,11 @@ class _HomeScreenState extends State<HomeScreen> {
               style: TextStyle(color: Colors.white, fontSize: 14),
             ),
           ),
-          _buildDrawerItem(Icons.person, 'Profile'),
-          _buildDrawerItem(Icons.settings, 'Settings'),
-          _buildDrawerItem(Icons.history, 'Trip History'),
-          _buildDrawerItem(Icons.payment, 'Payment Methods'),
-          _buildDrawerItem(Icons.support_agent, 'Support'),
+          _buildDrawerItem(Icons.person, 'Profile',() => Navigator.pushNamed(context, '/profilescreen')),
+          _buildDrawerItem(Icons.settings, 'Settings',() => Navigator.pushNamed(context, '/profile')),
+          _buildDrawerItem(Icons.history, 'Trip History',() => Navigator.pushNamed(context, '/profile')),
+          _buildDrawerItem(Icons.payment, 'Payment Methods',() => Navigator.pushNamed(context, '/profile')),
+          _buildDrawerItem(Icons.support_agent, 'Support',() => Navigator.pushNamed(context, '/profile')),
           Divider(color: lightgrey),
           // Use _handleLogout for the Logout option
           ListTile(
@@ -266,14 +265,19 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // Helper method to create drawer items
-  Widget _buildDrawerItem(IconData icon, String title) {
+  Widget _buildDrawerItem(
+    IconData icon,
+    String title,
+    VoidCallback onTapAction,
+  ) {
     return ListTile(
       leading: Icon(icon, color: primaryColor),
       title: Text(title, style: TextStyle(fontSize: 16, color: blacktext)),
       onTap: () {
         // Close the drawer
         Navigator.pop(context);
-        // Add navigation logic here
+
+        onTapAction();
       },
     );
   }
@@ -342,7 +346,11 @@ class HomeContent extends StatelessWidget {
                     ),
                     CircularMenu(
                       child: _loadSvg('assets/icons/planning.svg'),
-                      onpress: () => debugPrint('Planning Tapped'),
+                      onpress: () {
+                        Navigator.of(context, rootNavigator: true).push(
+                          MaterialPageRoute(builder: (context) => AiWelcome()),
+                        );
+                      },
                     ),
                     CircularMenu(
                       child: _loadSvg('assets/icons/lock.svg'),
