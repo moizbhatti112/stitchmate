@@ -11,6 +11,9 @@ import 'package:stitchmate/features/home/home_presentation/circular_menu.dart';
 import 'package:stitchmate/features/home/home_presentation/search_field.dart';
 import 'package:stitchmate/features/home/my_itinerary/views/my_itinerary.dart';
 import 'package:stitchmate/features/home/rewards/views/reward_screen.dart';
+import 'package:stitchmate/features/profile/viewmodels/profile_image_notifier.dart';
+import 'package:stitchmate/features/profile/views/profile_screen.dart';
+
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,30 +23,53 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex =
-      0; // Track the selected index for the bottom navigation bar
+  int _selectedIndex = 0;
+  bool _refreshAppBar = false;
 
-  // List of navigator keys for each tab
   final List<GlobalKey<NavigatorState>> _navigatorKeys = [
     GlobalKey<NavigatorState>(),
     GlobalKey<NavigatorState>(),
     GlobalKey<NavigatorState>(),
   ];
-  // Cache SVG assets
+  
   final Map<String, Widget> _svgCache = {};
+  
+  // Use the global image change notifier
+  final _imageChangeNotifier = ProfileImageChangeNotifier();
 
   @override
   void initState() {
     super.initState();
     _precacheAssets();
+    
+    // Listen for profile image changes
+    _imageChangeNotifier.lastUpdated.addListener(_onProfileImageChanged);
   }
-
+  
+  @override
+  void dispose() {
+    _imageChangeNotifier.lastUpdated.removeListener(_onProfileImageChanged);
+    super.dispose();
+  }
+  
+void _onProfileImageChanged() {
+  // Check if the widget is still mounted before scheduling setState
+  if (mounted) {
+    // Use post-frame callback to ensure we're not in build phase
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Double-check that the widget is still mounted before calling setState
+      if (mounted) {
+        setState(() {
+          _refreshAppBar = !_refreshAppBar;
+        });
+      }
+    });
+  }
+}
   Future<void> _precacheAssets() async {
-    // Use a local variable to reference the current context
     final BuildContext currentContext = context;
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      // Precache SVG icons - this is synchronous so no mounted check needed here
       _cacheSvgAssets([
         'assets/icons/car.svg',
         'assets/icons/plane.svg',
@@ -53,14 +79,12 @@ class _HomeScreenState extends State<HomeScreen> {
         'assets/icons/lock.svg',
       ]);
 
-      // For the asynchronous precaching, check if still mounted
       if (mounted) {
         await _precacheImages(currentContext);
       }
     });
   }
 
-  // Modified to accept context as a parameter
   Future<void> _precacheImages(BuildContext currentContext) async {
     final imagesToPreload = [
       'assets/images/carimage.png',
@@ -70,7 +94,6 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
 
     for (final asset in imagesToPreload) {
-      // Check if still mounted before each operation
       if (!mounted) return;
       await precacheImage(AssetImage(asset), currentContext);
     }
@@ -84,10 +107,8 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // Handle tap events on the bottom navigation bar
   void _onItemTapped(int index) {
     if (_selectedIndex == index) {
-      // If already on the same tab, pop to first route
       _navigatorKeys[index].currentState?.popUntil((route) => route.isFirst);
     } else {
       setState(() {
@@ -96,58 +117,67 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // Handle logout functionality
-  // In home_screen.dart, update the _handleLogout method:
+ void _handleLogout() async {
+  if (!mounted) return;
+  
+  // Store scaffoldMessenger before potentially losing context
+  final scaffoldMessenger = ScaffoldMessenger.of(context);
+  
+  // Close the drawer
+  Navigator.pop(context);
 
-  void _handleLogout() async {
-    final sm = ScaffoldMessenger.of(context);
-    // Close the drawer first
-    Navigator.pop(context);
+  if (!mounted) return;
 
-    // Show loading indicator
-    final BuildContext dialogContext = context;
-    showDialog(
-      context: dialogContext,
-      barrierDismissible: false,
-      builder:
-          (BuildContext context) =>
-              const Center(child: CircularProgressIndicator()),
-    );
+  // Store the context for the dialog
+  final BuildContext dialogContext = context;
+  
+  // Show loading dialog
+  showDialog(
+    context: dialogContext,
+    barrierDismissible: false,
+    builder: (BuildContext context) => const Center(child: CircularProgressIndicator()),
+  );
 
-    try {
-      // Get auth provider
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+  try {
+    // Use Provider without listening
+    final authProvider = Provider.of<AuthProvider>(dialogContext, listen: false);
+    await authProvider.signOut();
 
-      // Sign out
-      await authProvider.signOut();
+    // Check if context is still valid
+    if (!mounted) return;
+    
+    // Close loading dialog
+    if(context.mounted)
+    {
+      Navigator.of(dialogContext).pop();
+    }
 
-      // Make sure we dismiss the dialog before navigation
-      if (context.mounted) {
-        // Pop the loading dialog first
-        Navigator.of(dialogContext).pop();
-
-        // Then navigate to login screen after ensuring the dialog is closed
-        Future.microtask(() {
-          if (mounted) {
-            Navigator.of(
-              context,
-            ).pushNamedAndRemoveUntil('/login', (route) => false);
-          }
-        });
+    // Navigate to login screen using microtask to avoid build issues
+    Future.microtask(() {
+      if (mounted) {
+        Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
       }
-    } catch (e) {
-      // Close loading indicator
-      if (context.mounted) {
-        Navigator.of(dialogContext).pop();
-
-        // Show error message
-        sm.showSnackBar(
-          SnackBar(content: Text('Error signing out: ${e.toString()}')),
-        );
+    });
+  } catch (e) {
+    // Handle error, making sure the widget is still mounted
+    if (mounted) {
+      // Try to close the dialog if it's still showing
+      try {
+         if(context.mounted)
+    {
+      Navigator.of(dialogContext).pop();
+    }
+      } catch (dialogError) {
+        // Dialog might already be closed, ignore this error
       }
+      
+      // Show error message
+      scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text('Error signing out: ${e.toString()}')),
+      );
     }
   }
-
+}
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -157,10 +187,9 @@ class _HomeScreenState extends State<HomeScreen> {
           _navigatorKeys[_selectedIndex].currentState!.pop();
         } else if (!didPop && _selectedIndex != 0) {
           setState(() {
-            _selectedIndex = 0; // Go back to Home screen
+            _selectedIndex = 0;
           });
         } else if (!didPop && _selectedIndex == 0) {
-          // Exit the app if the user is on the Home tab
           Future.delayed(Duration(milliseconds: 100), () {
             SystemNavigator.pop();
           });
@@ -169,12 +198,11 @@ class _HomeScreenState extends State<HomeScreen> {
       child: SafeArea(
         child: Scaffold(
           backgroundColor: bgColor,
-          // Add drawer to the scaffold
           drawer: _buildDrawer(),
           body: IndexedStack(
             index: _selectedIndex,
             children: [
-              _buildNavigator(0, const HomeContent()),
+              _buildNavigator(0, HomeContent(refreshAppBar: _refreshAppBar)),
               _buildNavigator(1, const MyItinerary()),
               _buildNavigator(2, const RewardScreen()),
             ],
@@ -204,7 +232,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Helper method to create a separate navigator for each tab
   Widget _buildNavigator(int index, Widget child) {
     return Navigator(
       key: _navigatorKeys[index],
@@ -214,15 +241,10 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Create the drawer widget
-
-  // Updated _buildDrawer method
   Widget _buildDrawer() {
-    // Get user info from AuthProvider
-    Provider.of<AuthProvider>(context, listen: false);
-
-    // Get user name from Supabase user metadata
-    // final userName = user?.userMetadata?['name'] ?? user?.email?.split('@').first ?? 'User';
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.user;
+    final userEmail = user?.email ?? '';
 
     return Drawer(
       backgroundColor: bgColor,
@@ -240,17 +262,17 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             accountEmail: Text(
-              '',
+              userEmail,
               style: TextStyle(color: Colors.white, fontSize: 14),
             ),
+            currentAccountPicture: _buildDrawerProfilePicture(),
           ),
-          _buildDrawerItem(Icons.person, 'Profile',() => Navigator.pushNamed(context, '/profilescreen')),
-          _buildDrawerItem(Icons.settings, 'Settings',() => Navigator.pushNamed(context, '/profile')),
-          _buildDrawerItem(Icons.history, 'Trip History',() => Navigator.pushNamed(context, '/profile')),
-          _buildDrawerItem(Icons.payment, 'Payment Methods',() => Navigator.pushNamed(context, '/profile')),
-          _buildDrawerItem(Icons.support_agent, 'Support',() => Navigator.pushNamed(context, '/profile')),
+          _buildDrawerItem(Icons.person, 'Profile', _navigateToProfile),
+          _buildDrawerItem(Icons.settings, 'Settings', () => Navigator.pushNamed(context, '/settings')),
+          _buildDrawerItem(Icons.history, 'Trip History', () => Navigator.pushNamed(context, '/trip-history')),
+          _buildDrawerItem(Icons.payment, 'Payment Methods', () => Navigator.pushNamed(context, '/payment-methods')),
+          _buildDrawerItem(Icons.support_agent, 'Support', () => Navigator.pushNamed(context, '/support')),
           Divider(color: lightgrey),
-          // Use _handleLogout for the Logout option
           ListTile(
             leading: Icon(Icons.logout, color: primaryColor),
             title: Text(
@@ -263,8 +285,52 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+  
+Widget _buildDrawerProfilePicture() {
+    final userId = Provider.of<AuthProvider>(context, listen: false).user?.id ?? 'unknown';
+    
+    // Use ValueListenableBuilder to rebuild when image changes
+    return ValueListenableBuilder<DateTime>(
+      valueListenable: _imageChangeNotifier.lastUpdated,
+      builder: (context, lastUpdated, child) {
+        final profileUrl = _imageChangeNotifier.getImageUrl(userId);
+        
+        if (profileUrl != null && profileUrl.isNotEmpty) {
+          return CircleAvatar(
+            backgroundColor: Colors.white,
+            backgroundImage: NetworkImage(
+              // Add timestamp parameter to prevent caching issues
+              '$profileUrl?t=${DateTime.now().millisecondsSinceEpoch}',
+            ),
+            onBackgroundImageError: (exception, stackTrace) {
+              debugPrint('Error loading profile image in drawer: $exception');
+            },
+          );
+        } else {
+          return CircleAvatar(
+            backgroundColor: Colors.white,
+            child: Icon(
+              Icons.person,
+              color: primaryColor,
+              size: 40,
+            ),
+          );
+        }
+      },
+    );
+  }
+  
+  void _navigateToProfile() {
+    Navigator.push(
+      context, 
+      MaterialPageRoute(
+        builder: (context) => ProfileScreen(fromDrawer: true),
+      ),
+    ).then((_) {
+      // No need to do anything here - the notifier will handle the update
+    });
+  }
 
-  // Helper method to create drawer items
   Widget _buildDrawerItem(
     IconData icon,
     String title,
@@ -274,18 +340,17 @@ class _HomeScreenState extends State<HomeScreen> {
       leading: Icon(icon, color: primaryColor),
       title: Text(title, style: TextStyle(fontSize: 16, color: blacktext)),
       onTap: () {
-        // Close the drawer
         Navigator.pop(context);
-
         onTapAction();
       },
     );
   }
 }
 
-// Home screen content (moved to a separate widget)
 class HomeContent extends StatelessWidget {
-  const HomeContent({super.key});
+  final bool refreshAppBar;
+  
+  const HomeContent({super.key, this.refreshAppBar = false});
 
   @override
   Widget build(BuildContext context) {
@@ -296,7 +361,7 @@ class HomeContent extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 10),
         child: Column(
           children: [
-            const CustomAppBar(),
+            CustomAppBar(forceRefresh: refreshAppBar),
             SizedBox(height: size.height * 0.02),
             const SearchField(),
             SizedBox(height: size.height * 0.02),
@@ -335,8 +400,6 @@ class HomeContent extends StatelessWidget {
                   ],
                 ),
                 SizedBox(height: size.height * 0.02),
-
-                // 🔹 Second Row of Circular Menu
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -375,7 +438,6 @@ class HomeContent extends StatelessWidget {
     );
   }
 
-  // ✅ Helper method for text labels
   Widget _buildLabel(String text) {
     return Text(
       text,
@@ -388,7 +450,6 @@ class HomeContent extends StatelessWidget {
     );
   }
 
-  // ✅ SVG Loader
   Widget _loadSvg(String asset) {
     return SvgPicture.asset(asset, height: 32, width: 32);
   }

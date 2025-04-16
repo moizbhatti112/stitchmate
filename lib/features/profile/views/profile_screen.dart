@@ -4,25 +4,33 @@ import 'dart:io';
 import 'package:stitchmate/core/constants/colors.dart';
 import 'package:provider/provider.dart';
 import 'package:stitchmate/features/authentication/viewmodels/auth_provider.dart';
+import 'package:stitchmate/features/profile/viewmodels/profile_image_notifier.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:path/path.dart' as path;
+
+
 
 class ProfileProvider extends ChangeNotifier {
   final TextEditingController fnameController = TextEditingController();
   final TextEditingController lnameController = TextEditingController();
   final TextEditingController cnameController = TextEditingController();
 
+  // Access the global image change notifier
+  final _imageChangeNotifier = ProfileImageChangeNotifier();
+
   File? _image;
   bool _isButtonEnabled = false;
   bool _isLoading = false;
   String? _errorMessage;
   String? _profileImageUrl;
+  bool _isDataLoaded = false;
 
   File? get image => _image;
   bool get isButtonEnabled => _isButtonEnabled && !_isLoading;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   String? get profileImageUrl => _profileImageUrl;
+  bool get isDataLoaded => _isDataLoaded;
 
   final _supabase = Supabase.instance.client;
 
@@ -59,15 +67,102 @@ class ProfileProvider extends ChangeNotifier {
     }
   }
 
-  // New method to upload profile image to Supabase storage
+  // Load existing user profile data
+  Future<void> loadUserProfile() async {
+    try {
+      _isLoading = true;
+      _errorMessage = null;
+      notifyListeners();
+
+      final user = _supabase.auth.currentUser;
+      if (user == null) {
+        _errorMessage = "User not found. Please log in again.";
+        _isLoading = false;
+        notifyListeners();
+        return;
+      }
+
+      // Get user data from the users table
+      if (user.email != null) {
+        try {
+          final userData =
+              await _supabase
+                  .from('users')
+                  .select()
+                  .eq('email', user.email!)
+                  .single();
+
+          // Set the profile data
+          fnameController.text = userData['f_name'] ?? '';
+          lnameController.text = userData['l_name'] ?? '';
+          cnameController.text = userData['company'] ?? '';
+
+          // Check if there's a valid image URL
+          final dbImageUrl = userData['imageurl'];
+          if (dbImageUrl != null && dbImageUrl.isNotEmpty) {
+            _profileImageUrl = dbImageUrl;
+          }
+        } catch (e) {
+          debugPrint('Error loading user data: $e');
+        }
+      }
+
+      // Try to load existing profile image URL from storage if not found in DB
+      if (_profileImageUrl == null || _profileImageUrl!.isEmpty) {
+        try {
+          // Check if there's an existing profile image by listing files
+          final files = await _supabase.storage
+              .from('profiles')
+              .list(path: 'profilepics');
+
+          final matchingFiles =
+              files.where((file) => file.name.startsWith(user.id)).toList();
+
+          if (matchingFiles.isNotEmpty) {
+            final matchingFile = matchingFiles.first;
+            final imageUrl = _supabase.storage
+                .from('profiles')
+                .getPublicUrl('profilepics/${matchingFile.name}');
+
+            _profileImageUrl = imageUrl;
+
+            // Also update users table with this URL if user.email is available
+            if (user.email != null) {
+              try {
+                await _supabase
+                    .from('users')
+                    .update({'imageurl': imageUrl})
+                    .eq('email', user.email!);
+              } catch (e) {
+                debugPrint('Error updating user table with image URL: $e');
+              }
+            }
+          }
+        } catch (e) {
+          debugPrint("No existing profile image found: ${e.toString()}");
+        }
+      }
+
+      _isDataLoaded = true;
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = "Failed to load profile: ${e.toString()}";
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+// Updated method to upload profile image to Supabase storage
   Future<String?> uploadProfileImage(String userId) async {
-    if (_image == null) return null;
+    if (_image == null) {
+      return _profileImageUrl; // Return existing URL if no new image
+    }
 
     try {
       // Get file extension
       final fileExtension = path.extension(_image!.path);
 
-      // Create a simpler file path structure - just the userId as filename
+      // Create a file path structure using the userId as filename
       final filePath = '$userId$fileExtension';
 
       // Check if user is authenticated
@@ -89,9 +184,9 @@ class ProfileProvider extends ChangeNotifier {
       // Read file as bytes for upload
       final fileBytes = await _image!.readAsBytes();
 
-      // Upload to public bucket or with public permissions
+      // Upload to storage with upsert:true to replace existing file
       await _supabase.storage
-          .from('profiles/profilepics') // Access the subfolder directly
+          .from('profiles/profilepics')
           .uploadBinary(
             filePath,
             fileBytes,
@@ -102,15 +197,22 @@ class ProfileProvider extends ChangeNotifier {
       final imageUrl = _supabase.storage
           .from('profiles')
           .getPublicUrl('profilepics/$filePath');
-      _profileImageUrl = imageUrl;
 
-      debugPrint("Profile image uploaded successfully: $imageUrl");
-      return imageUrl;
+      // Add a timestamp query parameter to force refresh
+      final refreshUrl = '$imageUrl?t=${DateTime.now().millisecondsSinceEpoch}';
+
+      _profileImageUrl = refreshUrl;
+
+      // Notify global image change with userId
+      _imageChangeNotifier.updateImageUrl(currentUser.id, refreshUrl);
+
+      debugPrint("Profile image uploaded successfully: $refreshUrl");
+   
+      return refreshUrl;
     } catch (e) {
-      // Set detailed error message for debugging
       _errorMessage = "Failed to upload profile image: ${e.toString()}";
       debugPrint("Profile image upload error: $e");
-      return null;
+      return _profileImageUrl; // Return existing URL on error
     }
   }
 
@@ -135,10 +237,9 @@ class ProfileProvider extends ChangeNotifier {
       }
 
       // Upload profile image if selected
+      String? imageUrl = _profileImageUrl;
       if (_image != null) {
-        await uploadProfileImage(userId);
-        // Note: We're not storing the URL in any database table,
-        // just uploading to the storage bucket with the user's UUID as the filename
+        imageUrl = await uploadProfileImage(userId);
       }
 
       // Call the update method in AuthProvider
@@ -147,11 +248,30 @@ class ProfileProvider extends ChangeNotifier {
         firstName: fnameController.text.trim(),
         lastName: lnameController.text.trim(),
         company: cnameController.text.trim(),
-        imageUrl:
-            _profileImageUrl ?? '', // Use the uploaded image URL if available
+        imageUrl: imageUrl ?? '', // Use the uploaded image URL if available
       );
 
       if (result == 'success') {
+        // Save profile URL in user metadata for easy access
+        if (imageUrl != null && imageUrl.isNotEmpty) {
+          await _supabase.auth.updateUser(
+            UserAttributes(data: {'profileUrl': imageUrl}),
+          );
+        }
+
+        // Notify of image change to update the app bar with the specific userId
+        if (imageUrl != null) {
+          // Force a notification by updating twice with a slight delay
+          // This ensures all listeners detect the change
+          _imageChangeNotifier.updateImageUrl(userId, null);
+          
+          // Small delay to ensure the change is detected
+          await Future.delayed(Duration(milliseconds: 100));
+          
+          // Now set the actual image URL
+          _imageChangeNotifier.updateImageUrl(userId, imageUrl);
+        }
+
         _isLoading = false;
         notifyListeners();
         return true;
@@ -168,10 +288,19 @@ class ProfileProvider extends ChangeNotifier {
       return false;
     }
   }
+  
+  // Add a method to explicitly clear the current user's profile image cache
+  void clearProfileImageCache(String userId) {
+    _imageChangeNotifier.clearImageUrl(userId);
+  }
+
 }
 
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+  final bool fromDrawer;
+
+  // Add optional parameter to know if we're coming from drawer
+  const ProfileScreen({super.key, this.fromDrawer = false});
 
   @override
   Widget build(BuildContext context) {
@@ -182,6 +311,13 @@ class ProfileScreen extends StatelessWidget {
           backgroundColor: bgColor,
           body: Consumer<ProfileProvider>(
             builder: (context, provider, child) {
+              // Load user data when screen is first displayed
+              if (!provider.isDataLoaded && !provider.isLoading) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  provider.loadUserProfile();
+                });
+              }
+
               final Size size = MediaQuery.sizeOf(context);
               return SingleChildScrollView(
                 child: Column(
@@ -224,21 +360,16 @@ class ProfileScreen extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(vertical: 100),
                             child: Stack(
                               children: [
-                                CircleAvatar(
-                                  radius: 50,
-                                  backgroundColor: bgColor,
-                                  backgroundImage:
-                                      provider.image != null
-                                          ? FileImage(provider.image!)
-                                          : null,
-                                  child:
-                                      provider.image == null
-                                          ? Image.asset(
-                                            'assets/icons/person.png',
-                                            color: black,
-                                          )
-                                          : null,
-                                ),
+                                // Show profile image with loading state
+                                provider.isLoading
+                                    ? CircleAvatar(
+                                      radius: 50,
+                                      backgroundColor: bgColor,
+                                      child: CircularProgressIndicator(
+                                        color: primaryColor,
+                                      ),
+                                    )
+                                    : _buildProfileImage(provider),
                                 Positioned(
                                   bottom: 0,
                                   right: 0,
@@ -248,11 +379,14 @@ class ProfileScreen extends StatelessWidget {
                                       radius: 18,
                                       backgroundColor: bgColor,
                                       child: Icon(
-                                        provider.image == null
+                                        provider.image == null &&
+                                                provider.profileImageUrl == null
                                             ? Icons.camera_alt
                                             : Icons.edit,
                                         color:
-                                            provider.image == null
+                                            provider.image == null &&
+                                                    provider.profileImageUrl ==
+                                                        null
                                                 ? nexttext
                                                 : primaryColor,
                                         size: 18,
@@ -272,14 +406,16 @@ class ProfileScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Your Profile',
+                            fromDrawer ? 'Edit Profile' : 'Your Profile',
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                           Text(
-                            'Provide your basic details for a personalized experience.',
+                            fromDrawer
+                                ? 'Update your profile information'
+                                : 'Provide your basic details for a personalized experience.',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -346,11 +482,30 @@ class ProfileScreen extends StatelessWidget {
                                                 .saveUserProfile(context);
 
                                             if (success && context.mounted) {
-                                              // If successful, navigate to AI Welcome screen
-                                              Navigator.pushNamed(
+                                              // Show success message
+                                              ScaffoldMessenger.of(
                                                 context,
-                                                '/homescreen',
+                                              ).showSnackBar(
+                                                SnackBar(
+                                                  content: Text(
+                                                    'Profile updated successfully',
+                                                    style: TextStyle(
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                  backgroundColor: Colors.green,
+                                                ),
                                               );
+
+                                              // Navigate based on source
+                                              if (fromDrawer) {
+                                                Navigator.pop(context);
+                                              } else {
+                                                Navigator.pushReplacementNamed(
+                                                  context,
+                                                  '/homescreen',
+                                                );
+                                              }
                                             }
                                           }
                                           : null,
@@ -360,7 +515,7 @@ class ProfileScreen extends StatelessWidget {
                                             color: Colors.white,
                                           )
                                           : Text(
-                                            'Next',
+                                            fromDrawer ? 'Update' : 'Next',
                                             style: TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.w500,
@@ -385,6 +540,43 @@ class ProfileScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  // Helper method to build profile image
+  Widget _buildProfileImage(ProfileProvider provider) {
+    // If user picked a new image, show that
+    if (provider.image != null) {
+      return CircleAvatar(
+        radius: 50,
+        backgroundColor: bgColor,
+        backgroundImage: FileImage(provider.image!),
+      );
+    }
+    // If there's an existing profile image URL, show that
+    else if (provider.profileImageUrl != null &&
+        provider.profileImageUrl!.isNotEmpty) {
+      return CircleAvatar(
+        radius: 50,
+        backgroundColor: bgColor,
+        backgroundImage: NetworkImage(provider.profileImageUrl!),
+        onBackgroundImageError: (exception, stackTrace) {
+          // This is just an error handler, not supposed to return a widget
+          debugPrint('Error loading profile image: $exception');
+        },
+        child:
+            provider.profileImageUrl == null
+                ? Image.asset('assets/icons/person.png', color: black)
+                : null,
+      );
+    }
+    // Otherwise show default
+    else {
+      return CircleAvatar(
+        radius: 50,
+        backgroundColor: bgColor,
+        child: Image.asset('assets/icons/person.png', color: black),
+      );
+    }
   }
 
   Widget buildTextField(

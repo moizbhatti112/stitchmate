@@ -256,7 +256,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Gemini Assistant'), // Updated title
+        title: const Text('AI Assistant'), // Updated title
         backgroundColor: primaryColor,
         elevation: 2,
         foregroundColor: white,
@@ -335,7 +335,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     },
                     inputOptions: InputOptions(
                       inputDecoration: InputDecoration(
-                        hintText: 'Ask Gemini something...',
+                        hintText: 'Ask something...',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(25),
                           borderSide: BorderSide.none,
@@ -419,7 +419,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'Gemini is thinking...',
+                          'Assistant is thinking...',
                           style: TextStyle(
                             color: primaryColor,
                             fontStyle: FontStyle.italic,
