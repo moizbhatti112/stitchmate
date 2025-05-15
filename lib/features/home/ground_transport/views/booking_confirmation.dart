@@ -9,6 +9,7 @@ import 'package:stitchmate/features/home/ground_transport/viewmodels/location_se
 import 'package:stitchmate/features/home/ground_transport/viewmodels/route_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:stitchmate/features/home/plane_transport/payment/views/payment_selection.dart';
 
 class BookingConfirmation extends StatefulWidget {
   const BookingConfirmation({super.key});
@@ -18,14 +19,13 @@ class BookingConfirmation extends StatefulWidget {
 }
 
 class _BookingConfirmationState extends State<BookingConfirmation> {
-  final TextEditingController _notescontroller = TextEditingController();
   BitmapDescriptor markerIcon = BitmapDescriptor.defaultMarker;
   BitmapDescriptor dropoffMarkerIcon = BitmapDescriptor.defaultMarker;
   LocationService _locationService = LocationService();
   bool _isMapLoading = true;
   GoogleMapController? _mapController;
   bool _markersLoaded = false;
-  
+
   @override
   void initState() {
     super.initState();
@@ -88,25 +88,31 @@ class _BookingConfirmationState extends State<BookingConfirmation> {
     final routeProvider = Provider.of<RouteProvider>(context, listen: false);
     final pickup = routeProvider.pickupLocation;
     final dropoff = routeProvider.dropoffLocation;
-    
+
     if (_mapController != null && pickup != null && dropoff != null) {
       // Create bounds that include both pickup and dropoff
       LatLngBounds bounds = _createBounds(pickup, dropoff);
-      
+
       // Animate camera to show both markers with padding
-      _mapController!.animateCamera(
-        CameraUpdate.newLatLngBounds(bounds, 80),
-      );
+      _mapController!.animateCamera(CameraUpdate.newLatLngBounds(bounds, 80));
     }
   }
 
   // Helper function to create bounds from two points
   LatLngBounds _createBounds(LatLng point1, LatLng point2) {
-    double minLat = point1.latitude < point2.latitude ? point1.latitude : point2.latitude;
-    double maxLat = point1.latitude > point2.latitude ? point1.latitude : point2.latitude;
-    double minLng = point1.longitude < point2.longitude ? point1.longitude : point2.longitude;
-    double maxLng = point1.longitude > point2.longitude ? point1.longitude : point2.longitude;
-    
+    double minLat =
+        point1.latitude < point2.latitude ? point1.latitude : point2.latitude;
+    double maxLat =
+        point1.latitude > point2.latitude ? point1.latitude : point2.latitude;
+    double minLng =
+        point1.longitude < point2.longitude
+            ? point1.longitude
+            : point2.longitude;
+    double maxLng =
+        point1.longitude > point2.longitude
+            ? point1.longitude
+            : point2.longitude;
+
     return LatLngBounds(
       southwest: LatLng(minLat, minLng),
       northeast: LatLng(maxLat, maxLng),
@@ -151,49 +157,55 @@ class _BookingConfirmationState extends State<BookingConfirmation> {
         _locationService.getRoutePolyline(pickup, dropoff);
       }
     }
-    
+
     String routeEstimationText = "Calculating route...";
-    if (_locationService.estimatedDistance.isNotEmpty && 
+    if (_locationService.estimatedDistance.isNotEmpty &&
         _locationService.estimatedDuration.isNotEmpty) {
-      routeEstimationText = "Estimated route: ${_locationService.estimatedDuration} | ${_locationService.estimatedDistance}";
+      routeEstimationText =
+          "Estimated route: ${_locationService.estimatedDuration} | ${_locationService.estimatedDistance}";
     }
-    
+
     return Scaffold(
       body: Stack(
         children: [
           // Only show map when markers are ready, otherwise show loading state
           Positioned.fill(
-            child: _isMapLoading ? 
-              Shimmer.fromColors(
-                baseColor: Colors.grey[300]!,
-                highlightColor: Colors.grey[100]!,
-                child: Container(color: Colors.white),
-              ) : 
-              GoogleMap(
-                markers: Set<Marker>.from(_locationService.markers),
-                polylines: _locationService.polylines,
-                initialCameraPosition: CameraPosition(
-                  // Using center point between pickup and dropoff if available
-                  target: (pickup != null && dropoff != null) 
-                      ? LatLng(
-                          (pickup.latitude + dropoff.latitude) / 2,
-                          (pickup.longitude + dropoff.longitude) / 2)
-                      : pickup ?? LatLng(37.7749, -122.4194),
-                  zoom: 12, // Zoom out a bit to potentially show both locations
-                ),
-                onMapCreated: (GoogleMapController controller) {
-                  _mapController = controller;
-                  _locationService.onMapCreated(controller);
-                  
-                  // Wait a moment for the map to initialize properly before updating view
-                  Future.delayed(Duration(milliseconds: 300), () {
-                    _updateMapView();
-                  });
-                },
-                style: _locationService.mapStyle.isEmpty
-                    ? null
-                    : _locationService.mapStyle,
-              ),
+            child:
+                _isMapLoading
+                    ? Shimmer.fromColors(
+                      baseColor: Colors.grey[300]!,
+                      highlightColor: Colors.grey[100]!,
+                      child: Container(color: Colors.white),
+                    )
+                    : GoogleMap(
+                      markers: Set<Marker>.from(_locationService.markers),
+                      polylines: _locationService.polylines,
+                      initialCameraPosition: CameraPosition(
+                        // Using center point between pickup and dropoff if available
+                        target:
+                            (pickup != null && dropoff != null)
+                                ? LatLng(
+                                  (pickup.latitude + dropoff.latitude) / 2,
+                                  (pickup.longitude + dropoff.longitude) / 2,
+                                )
+                                : pickup ?? LatLng(37.7749, -122.4194),
+                        zoom:
+                            12, // Zoom out a bit to potentially show both locations
+                      ),
+                      onMapCreated: (GoogleMapController controller) {
+                        _mapController = controller;
+                        _locationService.onMapCreated(controller);
+
+                        // Wait a moment for the map to initialize properly before updating view
+                        Future.delayed(Duration(milliseconds: 300), () {
+                          _updateMapView();
+                        });
+                      },
+                      style:
+                          _locationService.mapStyle.isEmpty
+                              ? null
+                              : _locationService.mapStyle,
+                    ),
           ),
           // The rest of your UI remains unchanged
           DraggableScrollableSheet(
@@ -344,43 +356,7 @@ class _BookingConfirmationState extends State<BookingConfirmation> {
                         ),
                       ),
                       SizedBox(height: size.height * 0.03),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Your Chauffeur (1/1)',
-                            style: TextStyle(
-                              fontSize: 17,
-                              fontFamily: "PPNeueMontreal",
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Row(
-                            children: [
-                              IconButton(
-                                onPressed: () {},
-                                icon: Icon(Icons.arrow_back_ios, size: 16),
-                              ),
-                              IconButton(
-                                onPressed: () {},
-                                icon: Icon(Icons.arrow_forward_ios, size: 16),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: size.height * 0.02),
-                      Row(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(200),
-                            child: Image.asset(
-                              'assets/images/avtarc.png',
-                              height: size.height * 0.05,
-                            ),
-                          ),
-                        ],
-                      ),
+                    
                       SizedBox(height: size.height * 0.02),
                       Divider(),
                       SizedBox(height: size.height * 0.02),
@@ -406,7 +382,7 @@ class _BookingConfirmationState extends State<BookingConfirmation> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "Price 162",
+                                "Price Rs. ${_locationService.calculatedPrice}",
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontFamily: "HelveticaNeueMedium",
@@ -427,32 +403,25 @@ class _BookingConfirmationState extends State<BookingConfirmation> {
                         ],
                       ),
                       SizedBox(height: size.height * 0.02),
-                      TextField(
-                        controller: _notescontroller,
-                        decoration: InputDecoration(
-                          prefixIcon: Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: SvgPicture.asset(
-                              'assets/icons/notes.svg',
-                              width: 15,
-                              height: 15,
-                            ),
-                          ),
-                          hintText: "Add notes for chauffeur (optional)",
-                          hintStyle: TextStyle(color: phonefieldtext),
-                          filled: true,
-                          fillColor: phonefieldColor,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide.none,
-                          ),
-                        ),
-                      ),
+                   
                       SizedBox(height: size.height * 0.02),
                       Divider(),
 
                       SizedBox(height: size.height * 0.02),
-                      MyButton(text: "Confirm Order", onPressed: () {}),
+                      MyButton(
+                        text: "Confirm Order",
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (context) => PaymentSelectionScreen(
+                                    price: _locationService.calculatedPrice,
+                                  ),
+                            ),
+                          );
+                        },
+                      ),
                     ],
                   ),
                 ),

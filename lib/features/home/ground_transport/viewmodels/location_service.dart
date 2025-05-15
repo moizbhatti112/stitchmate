@@ -34,12 +34,42 @@ class LocationService {
   String get mapStyle => _mapStyle;
 String _estimatedDistance = "";
 String _estimatedDuration = "";
-
+int _calculatedPrice = 0;
 // Add these getters
 String get estimatedDistance => _estimatedDistance;
 String get estimatedDuration => _estimatedDuration;
+int get calculatedPrice => _calculatedPrice;
   // Fetch best route from Directions API
-
+////////////////////////////////////////////////////////////////////////////////////////
+ int calculatePrice() {
+    // If no distance is available yet, return 0
+    if (_estimatedDistance.isEmpty) return 0;
+    
+    // Extract the distance value from the string (e.g., "5.2 km" -> 5.2)
+    // First, handle if there's no unit
+    if (!_estimatedDistance.contains("km")) {
+      debugPrint("Distance format not recognized: $_estimatedDistance");
+      return 0;
+    }
+    
+    String distanceStr = _estimatedDistance.split(' ')[0];
+    double distanceKm;
+    
+    try {
+      distanceKm = double.parse(distanceStr);
+    } catch (e) {
+      debugPrint("Error parsing distance value: $e");
+      return 0;
+    }
+    
+    // Calculate price at Rs 25 per km
+    // Round up to the nearest integer
+    int basePrice = (distanceKm * 25).ceil();
+    
+    // Ensure minimum price is 25 rupees
+    return basePrice < 25 ? 25 : basePrice;
+  }
+  ///////////////////////////////////////////////////////////////////////////////////////////////
 Future<void> getRoutePolyline(LatLng pickup, LatLng dropoff) async {
   String url =
       "https://maps.googleapis.com/maps/api/directions/json?"
@@ -64,6 +94,8 @@ Future<void> getRoutePolyline(LatLng pickup, LatLng dropoff) async {
         // Extract information using our models
         _estimatedDistance = leg.distance.text;
         _estimatedDuration = leg.duration.text;
+
+          _calculatedPrice = calculatePrice();
         debugPrint("Distance: $_estimatedDistance, Duration: $_estimatedDuration");
         
         final String encodedPolyline = route.overviewPolyline.points;

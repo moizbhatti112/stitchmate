@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stitchmate/core/constants/colors.dart';
+import 'package:stitchmate/features/admin_panel/views/admin_screen.dart';
 import 'package:stitchmate/features/authentication/viewmodels/auth_provider.dart';
 import 'package:stitchmate/features/home/home_presentation/home_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -20,6 +21,11 @@ class _LoginScreenState extends State<LoginScreen> {
   String? _emailError;
   String? _passwordError;
   bool _isLoading = false;
+
+  // Admin credentials - consider storing these securely in a production app
+  // These could be moved to a secure config file or environment variables
+  static const String adminEmail = "admin@stitchmate.com";
+  static const String adminPassword = "admin123"; // Use a strong password in production
 
   @override
   void initState() {
@@ -72,6 +78,19 @@ class _LoginScreenState extends State<LoginScreen> {
     });
     
     try {
+      // Check if admin credentials were entered
+      if (email == adminEmail && password == adminPassword) {
+        // Navigate to admin screen
+        if (mounted) {
+          Navigator.pushAndRemoveUntil(
+            context, 
+            MaterialPageRoute(builder: (context) => const AdminScreen()),
+            (route) => false, // Remove all previous routes
+          );
+        }
+        return; // Skip normal authentication process
+      }
+      
       // Get auth provider
       Provider.of<AuthProvider>(context, listen: false);
       
@@ -337,6 +356,4 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-  
-
 }

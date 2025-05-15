@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
+import 'package:stitchmate/core/constants/stripe_keys.dart';
 import 'package:stitchmate/core/helperfunctions/network_provider.dart';
 import 'package:stitchmate/features/ai_planner/viewmodels/chat_viewmodel.dart';
 import 'package:stitchmate/features/ai_planner/views/chat_screen.dart';
@@ -10,6 +12,8 @@ import 'package:stitchmate/features/authentication/views/email_address.dart';
 import 'package:stitchmate/features/authentication/views/loginscreen.dart';
 import 'package:stitchmate/features/authentication/views/signup_screen.dart';
 import 'package:stitchmate/features/authentication/views/welcome.dart';
+import 'package:stitchmate/features/home/concierge_services/views/concierge_services.dart';
+import 'package:stitchmate/features/home/event_transportation/views/event_transportation.dart';
 import 'package:stitchmate/features/home/ground_transport/viewmodels/booking_provider.dart';
 import 'package:stitchmate/features/home/ground_transport/viewmodels/choosevehicle_provider.dart';
 import 'package:stitchmate/features/home/ground_transport/viewmodels/route_provider.dart';
@@ -18,6 +22,16 @@ import 'package:stitchmate/features/home/ground_transport/views/choose_vehicle.d
 import 'package:stitchmate/features/home/ground_transport/views/luxury_ground_transportation.dart';
 import 'package:stitchmate/features/home/ground_transport/views/welcome_screen.dart';
 import 'package:stitchmate/features/home/home_presentation/home_screen.dart';
+import 'package:stitchmate/features/home/plane_transport/viewmodels/booking_provider.dart';
+import 'package:stitchmate/features/home/plane_transport/viewmodels/chooseplane_provider.dart';
+import 'package:stitchmate/features/home/plane_transport/viewmodels/route_provider.dart';
+import 'package:stitchmate/features/home/plane_transport/views/booking_confirmation.dart';
+import 'package:stitchmate/features/home/plane_transport/views/choose_plane.dart';
+// import 'package:stitchmate/features/home/jet_service/views/jet_booking.dart';
+import 'package:stitchmate/features/home/plane_transport/views/jet_welcome.dart';
+import 'package:stitchmate/features/home/plane_transport/views/luxury_plane_transportation.dart';
+// import 'package:stitchmate/features/payment/views/payment_selection.dart';
+import 'package:stitchmate/features/home/secure_travel/secure_travel.dart';
 import 'package:stitchmate/features/profile/views/profile_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -44,7 +58,11 @@ Future<void> _initializeResources() async {
 void main() async {
   // Ensure Flutter binding is initialized
   WidgetsFlutterBinding.ensureInitialized();
-  
+
+  // Initialize Stripe
+  Stripe.publishableKey = stripePublishableKey;
+  await Stripe.instance.applySettings();
+
   // Initialize Supabase
   await Supabase.initialize(
     anonKey:
@@ -61,10 +79,13 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ChooseVehicleProvider()),
+        ChangeNotifierProvider(create: (_) => ChoosePlaneProvider()),
         ChangeNotifierProvider(create: (_) => BookingProvider()),
+        ChangeNotifierProvider(create: (_) => PlaneBookingProvider()),
         ChangeNotifierProvider(create: (_) => RouteProvider()),
+        ChangeNotifierProvider(create: (_) => PlaneRouteProvider()),
         ChangeNotifierProvider(create: (_) => NetworkProvider()),
-         ChangeNotifierProvider(create: (_) => ChatViewModel()),
+        ChangeNotifierProvider(create: (_) => ChatViewModel()),
       ],
       child: const MyApp(),
     ),
@@ -78,9 +99,6 @@ class AuthStateCheck extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    
-
-
     
     // Simple check: if authenticated go to home, otherwise login
     if (authProvider.isAuthenticated) {
@@ -126,8 +144,17 @@ class MyApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(), 
         '/luxurywelcome': (context) => const WelcomeScreen(),
         '/choosevehicle': (context) => const ChooseVehicle(),
+        //  '/choosevehicle': (context) => const CarSelectionScreen(),
         '/bookingconfirmation': (context) => const BookingConfirmation(),
         '/chatscreen': (context) => const ChatScreen(),
+        '/jetwelcome': (context) => const JetWelcome(),
+        '/jetbooking': (context) => const LuxuryPlaneTransportation(),
+        '/chooseplane': (context) => const ChoosePlane(),
+        '/event': (context) => const EventTransportation(),
+        '/concierge': (context) => const ConciergeServices(),
+        '/securetravel': (context) => const SecureTravel(),
+        '/planebc': (context) => const PlaneBookingConfirmation(),
+        // '/paymentmethod': (context) => const PaymentSelectionScreen(),
       },
     );
   }

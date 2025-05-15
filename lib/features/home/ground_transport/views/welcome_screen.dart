@@ -45,6 +45,7 @@ class WelcomeScreen extends StatelessWidget {
               text: 'Continue',
               onPressed: () {
                 Navigator.pushNamed(context, '/luxurytransport');
+                //  Navigator.pushNamed(context, '/choosevehicle');
               },
             ),
           ],
