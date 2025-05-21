@@ -3,15 +3,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:stitchmate/core/constants/stripe_keys.dart';
 
-
 class StripeService {
   StripeService._();
   static final StripeService instance = StripeService._();
 
-  Future<void> makePayment({required int amount}) async {
+  Future<void> makePayment({
+    required int amount,
+    required Function onPaymentSuccess,
+  }) async {
     try {
       // Changed return type expectation to Map
-      String? paymentIntentClientSecret = await _createPaymentIntent(amount, "pkr");
+      String? paymentIntentClientSecret = await _createPaymentIntent(
+        amount,
+        "pkr",
+      );
 
       if (paymentIntentClientSecret == null) return;
       await Stripe.instance.initPaymentSheet(
@@ -20,7 +25,7 @@ class StripeService {
           merchantDisplayName: "Stitchmate",
         ),
       );
-      await _processPayment(); 
+      await _processPayment(onPaymentSuccess);
     } catch (e) {
       debugPrint("Payment error: ${e.toString()}");
     }
@@ -57,11 +62,12 @@ class StripeService {
     }
   }
 
-  Future<void> _processPayment() async {
+  Future<void> _processPayment(Function onPaymentSuccess) async {
     try {
       await Stripe.instance.presentPaymentSheet();
-      await Stripe.instance.confirmPaymentSheetPayment(); 
+      // await Stripe.instance.confirmPaymentSheetPayment();
       // Handle successful payment here
+      onPaymentSuccess();
     } catch (e) {
       debugPrint("Payment processing error: ${e.toString()}");
     }

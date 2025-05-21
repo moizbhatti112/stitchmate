@@ -172,7 +172,7 @@ class _PlaneBookingConfirmationState extends State<PlaneBookingConfirmation> {
     String routeEstimationText = "Calculating route...";
     if (_locationService.estimatedDistance.isNotEmpty && 
         _locationService.estimatedDuration.isNotEmpty) {
-      routeEstimationText = "Estimated route: ${_locationService.estimatedDuration} | ${_locationService.estimatedDistance}";
+      routeEstimationText = "Estimated route: ${_locationService.estimatedDuration} ";
     }
     
     return Scaffold(

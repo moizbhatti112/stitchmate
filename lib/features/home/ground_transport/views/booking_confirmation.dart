@@ -9,7 +9,7 @@ import 'package:stitchmate/features/home/ground_transport/viewmodels/location_se
 import 'package:stitchmate/features/home/ground_transport/viewmodels/route_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:stitchmate/features/home/plane_transport/payment/views/payment_selection.dart';
+import 'package:stitchmate/features/home/ground_transport/payment/views/payment_selection.dart';
 
 class BookingConfirmation extends StatefulWidget {
   const BookingConfirmation({super.key});

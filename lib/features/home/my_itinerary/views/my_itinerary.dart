@@ -15,8 +15,7 @@ class MyItinerary extends StatelessWidget {
       },
       child: Scaffold(
         backgroundColor: bgColor,
-        body: const Center(child: TextField()),
-        
+        body: const Center(child: Text("Itinerary Screen")),
       ),
     );
   }

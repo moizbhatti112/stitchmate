@@ -69,7 +69,7 @@ void main() async {
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhlZ3V4enpnYXNvbHpwanZjbW15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQxMDY2NjgsImV4cCI6MjA1OTY4MjY2OH0.dTV6HB5S8A10DaDbR0Q2Ip7mOBwFziDwr_I6xl_eeEc',
     url: 'https://heguxzzgasolzpjvcmmy.supabase.co',
   );
-  
+
   // Initialize essential resources before app startup
   await _initializeResources();
 
@@ -99,7 +99,7 @@ class AuthStateCheck extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    
+
     // Simple check: if authenticated go to home, otherwise login
     if (authProvider.isAuthenticated) {
       return const HomeScreen();
@@ -141,7 +141,7 @@ class MyApp extends StatelessWidget {
         '/profilescreen': (context) => const ProfileScreen(),
         '/homescreen': (context) => const HomeScreen(),
         '/luxurytransport': (context) => const LuxuryGroundTransportation(),
-        '/login': (context) => const LoginScreen(), 
+        '/login': (context) => const LoginScreen(),
         '/luxurywelcome': (context) => const WelcomeScreen(),
         '/choosevehicle': (context) => const ChooseVehicle(),
         //  '/choosevehicle': (context) => const CarSelectionScreen(),

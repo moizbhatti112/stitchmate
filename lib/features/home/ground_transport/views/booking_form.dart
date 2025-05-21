@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:stitchmate/core/constants/colors.dart';
 import 'package:stitchmate/features/home/ground_transport/views/one_way_form.dart';
 import 'package:stitchmate/features/home/ground_transport/views/hourly_form.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -53,8 +52,8 @@ class _BookingFormState extends State<BookingForm> with SingleTickerProviderStat
                   fontFamily: "PP Neue Montreal",
                 ),
               ),
-              const SizedBox(height: 16),
-              _buildTabSelector(),
+              const SizedBox(height: 10),
+              // _buildTabSelector(),
               const SizedBox(height: 20),
               SizedBox(
                 height: MediaQuery.of(context).size.height * 0.9,
@@ -81,38 +80,38 @@ class _BookingFormState extends State<BookingForm> with SingleTickerProviderStat
     );
   }
 
-  Widget _buildTabSelector() {
-    return TabBar(
-      controller: _tabController,
-      indicatorColor: primaryColor,
-      labelColor: primaryColor,
-      unselectedLabelColor: lightgrey,
-      indicator: const UnderlineTabIndicator(
-        borderSide: BorderSide(width: 2.3, color: primaryColor),
-        insets: EdgeInsets.symmetric(horizontal: 135),
-      ),
-      tabs: const [
-        Tab(
-          child: Text(
-            'One Way',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              fontFamily: "HelveticaNeueMedium",
-            ),
-          ),
-        ),
-        Tab(
-          child: Text(
-            'By the hour',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              fontFamily: "HelveticaNeueMedium",
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+  // Widget _buildTabSelector() {
+  //   return TabBar(
+  //     controller: _tabController,
+  //     indicatorColor: primaryColor,
+  //     labelColor: primaryColor,
+  //     unselectedLabelColor: lightgrey,
+  //     indicator: const UnderlineTabIndicator(
+  //       borderSide: BorderSide(width: 2.3, color: primaryColor),
+  //       insets: EdgeInsets.symmetric(horizontal: 135),
+  //     ),
+  //     tabs: const [
+  //       Tab(
+  //         child: Text(
+  //           'One Way',
+  //           style: TextStyle(
+  //             fontSize: 16,
+  //             fontWeight: FontWeight.w500,
+  //             fontFamily: "HelveticaNeueMedium",
+  //           ),
+  //         ),
+  //       ),
+  //       Tab(
+  //         child: Text(
+  //           'By the hour',
+  //           style: TextStyle(
+  //             fontSize: 16,
+  //             fontWeight: FontWeight.w500,
+  //             fontFamily: "HelveticaNeueMedium",
+  //           ),
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
 }

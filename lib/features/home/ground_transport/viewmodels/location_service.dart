@@ -64,10 +64,10 @@ int get calculatedPrice => _calculatedPrice;
     
     // Calculate price at Rs 25 per km
     // Round up to the nearest integer
-    int basePrice = (distanceKm * 25).ceil();
+    int basePrice = (distanceKm * 50).ceil();
     
     // Ensure minimum price is 25 rupees
-    return basePrice < 25 ? 25 : basePrice;
+    return basePrice < 50 ? 50 : basePrice;
   }
   ///////////////////////////////////////////////////////////////////////////////////////////////
 Future<void> getRoutePolyline(LatLng pickup, LatLng dropoff) async {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:stitchmate/core/constants/colors.dart';
+import 'package:stitchmate/features/home/ground_transport/payment/views/payment_success.dart';
 import 'package:stitchmate/features/home/plane_transport/viewmodels/location_service.dart';
 import 'package:stitchmate/features/home/plane_transport/payment/services/stripe_service.dart';
 
@@ -77,35 +78,48 @@ class _PaymentSelectionScreenState extends State<PaymentSelectionScreen> {
               const SizedBox(height: 20),
               // Proceed Button
               ElevatedButton(
-                onPressed: selectedPaymentMethod != null
-                    ? () {
-                        // Make sure the price is valid (not zero) before proceeding
-                        // if (widget.price <= 0) {
-                        //   ScaffoldMessenger.of(context).showSnackBar(
-                        //     const SnackBar(
-                        //       content: Text('Invalid price. Please try again.'),
-                        //     ),
-                        //   );
-                        //   return;
-                        // }
-                        
-                        // if (selectedPaymentMethod == 'card') {
-                        //   debugPrint("Making payment with amount: ${widget.price}");
-                          StripeService.instance.makePayment(
-                            amount: widget.price,
-                          );
-                        // }
-                        //  else {
-                        //   // Handle cash payment
-                        //   ScaffoldMessenger.of(context).showSnackBar(
-                        //     const SnackBar(
-                        //       content: Text('Cash payment selected. Redirecting to confirmation...'),
-                        //     ),
-                        //   );
-                        //   // Navigate to confirmation or next screen
-                        // }
-                      }
-                    : null,
+                onPressed:
+                    selectedPaymentMethod != null
+                        ? () async {
+                          if (selectedPaymentMethod == 'card') {
+                            try {
+                              await StripeService.instance.makePayment(
+                                amount: widget.price,
+                                onPaymentSuccess: () {
+                                  // Navigate to success screen after payment
+                                  Navigator.of(context).pushReplacement(
+                                    MaterialPageRoute(
+                                      builder:
+                                          (context) =>
+                                              const PaymentSuccessScreen(),
+                                    ),
+                                  );
+                                },
+                              );
+                            } catch (e) {
+                             if(context.mounted)
+                             {
+                               ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Payment failed: ${e.toString()}',
+                                  ),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                             }
+                            }
+                          } else if (selectedPaymentMethod == 'cash') {
+                            // For cash payment, directly navigate to success screen
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                builder:
+                                    (context) => const PaymentSuccessScreen(),
+                              ),
+                            );
+                          }
+                        }
+                        : null,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
