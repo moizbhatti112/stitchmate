@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:stitchmate/core/constants/colors.dart';
 import 'package:stitchmate/features/home/ground_transport/payment/views/payment_success.dart';
+import 'package:stitchmate/features/home/plane_transport/services/plane_order_service.dart';
+import 'package:stitchmate/features/home/plane_transport/viewmodels/booking_provider.dart';
 import 'package:stitchmate/features/home/plane_transport/viewmodels/location_service.dart';
 import 'package:stitchmate/features/home/plane_transport/payment/services/stripe_service.dart';
 
@@ -85,38 +88,77 @@ class _PaymentSelectionScreenState extends State<PaymentSelectionScreen> {
                             try {
                               await StripeService.instance.makePayment(
                                 amount: widget.price,
-                                onPaymentSuccess: () {
+                                onPaymentSuccess: () async {
                                   // Navigate to success screen after payment
-                                  Navigator.of(context).pushReplacement(
-                                    MaterialPageRoute(
-                                      builder:
-                                          (context) =>
-                                              const PaymentSuccessScreen(),
-                                    ),
+                                  // Get booking details from provider
+                                  final bookingProvider =
+                                      Provider.of<PlaneBookingProvider>(
+                                        context,
+                                        listen: false,
+                                      );
+
+                                  // Save order to Supabase
+                                  await PlaneOrderService().addPlaneOrder(
+                                    pickup: bookingProvider.pickupLocation,
+                                    dropoff: bookingProvider.dropoffLocation,
+                                    date: bookingProvider.date,
+                                    time: bookingProvider.time,
                                   );
+
+                                  // Clear booking data
+                                  bookingProvider.clearBookingData();
+
+                                  // Navigate to success screen after payment
+                                  if (context.mounted) {
+                                    Navigator.of(context).pushReplacement(
+                                      MaterialPageRoute(
+                                        builder:
+                                            (context) =>
+                                                const PaymentSuccessScreen(),
+                                      ),
+                                    );
+                                  }
                                 },
                               );
                             } catch (e) {
-                             if(context.mounted)
-                             {
-                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Payment failed: ${e.toString()}',
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Payment failed: ${e.toString()}',
+                                    ),
+                                    backgroundColor: Colors.red,
                                   ),
-                                  backgroundColor: Colors.red,
-                                ),
-                              );
-                             }
+                                );
+                              }
                             }
                           } else if (selectedPaymentMethod == 'cash') {
+                             final bookingProvider =
+                                      Provider.of<PlaneBookingProvider>(
+                                        context,
+                                        listen: false,
+                                      );
+
+                                  // Save order to Supabase
+                                  await PlaneOrderService().addPlaneOrder(
+                                    pickup: bookingProvider.pickupLocation,
+                                    dropoff: bookingProvider.dropoffLocation,
+                                    date: bookingProvider.date,
+                                    time: bookingProvider.time,
+                                  );
+
+                                  // Clear booking data
+                                  bookingProvider.clearBookingData();
                             // For cash payment, directly navigate to success screen
-                            Navigator.of(context).pushReplacement(
+                           if(context.mounted)
+                           {
+                             Navigator.of(context).pushReplacement(
                               MaterialPageRoute(
                                 builder:
                                     (context) => const PaymentSuccessScreen(),
                               ),
                             );
+                           }
                           }
                         }
                         : null,
@@ -173,15 +215,16 @@ class PaymentOptionCard extends StatelessWidget {
             color: isSelected ? primaryColor : Colors.grey[300]!,
             width: isSelected ? 2 : 1,
           ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: primaryColor,
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : null,
+          boxShadow:
+              isSelected
+                  ? [
+                    BoxShadow(
+                      color: primaryColor,
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                  : null,
         ),
         child: Row(
           children: [

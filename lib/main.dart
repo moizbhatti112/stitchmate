@@ -69,7 +69,7 @@ void main() async {
         'your key',
     url: 'your url',
   );
-
+  
   // Initialize essential resources before app startup
   await _initializeResources();
 
@@ -99,7 +99,7 @@ class AuthStateCheck extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-
+    
     // Simple check: if authenticated go to home, otherwise login
     if (authProvider.isAuthenticated) {
       return const HomeScreen();
@@ -141,7 +141,7 @@ class MyApp extends StatelessWidget {
         '/profilescreen': (context) => const ProfileScreen(),
         '/homescreen': (context) => const HomeScreen(),
         '/luxurytransport': (context) => const LuxuryGroundTransportation(),
-        '/login': (context) => const LoginScreen(),
+        '/login': (context) => const LoginScreen(), 
         '/luxurywelcome': (context) => const WelcomeScreen(),
         '/choosevehicle': (context) => const ChooseVehicle(),
         //  '/choosevehicle': (context) => const CarSelectionScreen(),
