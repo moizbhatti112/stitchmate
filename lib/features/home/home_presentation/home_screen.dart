@@ -24,6 +24,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   bool _refreshAppBar = false;
+  bool _refreshItinerary = false;
 
   final List<GlobalKey<NavigatorState>> _navigatorKeys = [
     GlobalKey<NavigatorState>(),
@@ -113,6 +114,10 @@ class _HomeScreenState extends State<HomeScreen> {
     } else {
       setState(() {
         _selectedIndex = index;
+        if (index == 1) {
+          // My Itinerary tab
+          _refreshItinerary = !_refreshItinerary;
+        }
       });
     }
   }
@@ -209,7 +214,7 @@ class _HomeScreenState extends State<HomeScreen> {
             index: _selectedIndex,
             children: [
               _buildNavigator(0, HomeContent(refreshAppBar: _refreshAppBar)),
-              _buildNavigator(1, const MyItinerary()),
+              _buildNavigator(1, MyItinerary(key: ValueKey(_refreshItinerary))),
               _buildNavigator(2, const RewardScreen()),
             ],
           ),

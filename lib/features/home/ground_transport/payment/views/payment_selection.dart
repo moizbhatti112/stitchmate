@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:stitchmate/core/constants/colors.dart';
 import 'package:stitchmate/features/home/ground_transport/payment/views/payment_success.dart';
+import 'package:stitchmate/features/home/ground_transport/viewmodels/booking_provider.dart';
 import 'package:stitchmate/features/home/ground_transport/viewmodels/location_service.dart';
 import 'package:stitchmate/features/home/ground_transport/payment/services/stripe_service.dart';
+import 'package:stitchmate/features/home/ground_transport/services/order_service.dart';
+import 'package:provider/provider.dart';
 
 class PaymentSelectionScreen extends StatefulWidget {
   final int price;
@@ -85,17 +88,35 @@ class _PaymentSelectionScreenState extends State<PaymentSelectionScreen> {
                             try {
                               await StripeService.instance.makePayment(
                                 amount: widget.price,
-                                onPaymentSuccess: () {
-                                  // Navigate to success screen after payment
-                                  Navigator.of(context).pushReplacement(
-                                    MaterialPageRoute(
-                                      builder:
-                                          (context) =>
-                                              const PaymentSuccessScreen(),
-                                    ),
+                                onPaymentSuccess: () async {
+                                  // Get booking details from provider
+                                  final bookingProvider =
+                                      Provider.of<BookingProvider>(
+                                        context,
+                                        listen: false,
+                                      );
+
+                                  // Save order to Supabase
+                                  await OrderService().addOrder(
+                                    pickup: bookingProvider.pickupLocation,
+                                    dropoff: bookingProvider.dropoffLocation,
+                                    date: bookingProvider.date,
+                                    time: bookingProvider.time,
                                   );
 
-                                  // Add order to history
+                                  // Clear booking data
+                                  bookingProvider.clearBookingData();
+
+                                  // Navigate to success screen after payment
+                                  if (context.mounted) {
+                                    Navigator.of(context).pushReplacement(
+                                      MaterialPageRoute(
+                                        builder:
+                                            (context) =>
+                                                const PaymentSuccessScreen(),
+                                      ),
+                                    );
+                                  }
                                 },
                               );
                             } catch (e) {
@@ -111,13 +132,33 @@ class _PaymentSelectionScreenState extends State<PaymentSelectionScreen> {
                               }
                             }
                           } else if (selectedPaymentMethod == 'cash') {
+                              final bookingProvider =
+                                      Provider.of<BookingProvider>(
+                                        context,
+                                        listen: false,
+                                      );
+
+                                  // Save order to Supabase
+                                  await OrderService().addOrder(
+                                    pickup: bookingProvider.pickupLocation,
+                                    dropoff: bookingProvider.dropoffLocation,
+                                    date: bookingProvider.date,
+                                    time: bookingProvider.time,
+                                  );
+
+                                  // Clear booking data
+                                  bookingProvider.clearBookingData();
+
                             // For cash payment, directly navigate to success screen
-                            Navigator.of(context).pushReplacement(
+                            if(context.mounted)
+                            {
+                              Navigator.of(context).pushReplacement(
                               MaterialPageRoute(
                                 builder:
                                     (context) => const PaymentSuccessScreen(),
                               ),
                             );
+                            }
                           }
                         }
                         : null,
