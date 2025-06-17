@@ -1,4 +1,4 @@
-# gyde
+# Stitchmate
 
 A new Flutter project.
 
