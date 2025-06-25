@@ -1,6 +1,6 @@
-# gyde
+# Stitchmate 
 
-A new Flutter project.
+AI Powered Travel Companion APP
 
 ## Getting Started
 
