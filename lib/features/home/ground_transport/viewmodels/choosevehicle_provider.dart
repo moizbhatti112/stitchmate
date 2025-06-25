@@ -2,19 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:stitchmate/features/admin_panel/models/vehicle_model.dart';
 import 'package:stitchmate/features/admin_panel/viewmodels/vehicle_service.dart';
 
-
 class CarType {
   final String title;
   final String path;
-  final String price;
+  final String? price; // Made price optional
   final String? imageUrl; // Added for Supabase image URL
   final String? description; // Added for Supabase description
   final int? id; // Added for Supabase ID
 
   CarType({
-    required this.title, 
-    required this.path, 
-    required this.price,
+    required this.title,
+    required this.path,
+    this.price, // Made price optional
     this.imageUrl,
     this.description,
     this.id,
@@ -30,21 +29,9 @@ class ChooseVehicleProvider extends ChangeNotifier {
 
   // Default car types (will be replaced with data from Supabase)
   List<CarType> carTypes = [
-    CarType(
-      title: 'Luxury', 
-      path: 'assets/images/mercedes.png', 
-      price: '120',
-    ),
-    CarType(
-      title: 'Economy', 
-      path: 'assets/images/electric.png', 
-      price: '80',
-    ),
-    CarType(
-      title: 'SUV', 
-      path: 'assets/images/car.png', 
-      price: '150',
-    ),
+    CarType(title: 'Luxury', path: 'assets/images/mercedes.png', price: '120'),
+    CarType(title: 'Economy', path: 'assets/images/electric.png', price: '80'),
+    CarType(title: 'SUV', path: 'assets/images/car.png', price: '150'),
   ];
 
   // List to store Supabase vehicle data
@@ -64,18 +51,24 @@ class ChooseVehicleProvider extends ChangeNotifier {
     try {
       // Get cars from Supabase
       final cars = await _vehicleService.getCars();
-      
+
       if (cars.isNotEmpty) {
         // Convert Vehicle objects to CarType objects
-        carTypes = cars.map((car) => CarType(
-          id: car.id,
-          title: car.name,
-          path: 'assets/images/mercedes.png', // Default image as fallback
-          price: car.price.toString(),
-          imageUrl: car.imageUrl,
-          description: car.description,
-        )).toList();
-        
+        carTypes =
+            cars
+                .map(
+                  (car) => CarType(
+                    id: car.id,
+                    title: car.name,
+                    path:
+                        'assets/images/mercedes.png', // Default image as fallback
+                    price: car.price.toString(), // Handle null price
+                    imageUrl: car.imageUrl,
+                    description: car.description,
+                  ),
+                )
+                .toList();
+
         // Store the original vehicles for reference
         supabaseVehicles = cars;
       }
@@ -103,7 +96,8 @@ class ChooseVehicleProvider extends ChangeNotifier {
 
   // Get vehicle details by index
   Vehicle? getSelectedVehicleDetails() {
-    if (supabaseVehicles.isEmpty || selectedCarIndex >= supabaseVehicles.length) {
+    if (supabaseVehicles.isEmpty ||
+        selectedCarIndex >= supabaseVehicles.length) {
       return null;
     }
     return supabaseVehicles[selectedCarIndex];

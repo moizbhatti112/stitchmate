@@ -25,7 +25,8 @@ class _LoginScreenState extends State<LoginScreen> {
   // Admin credentials - consider storing these securely in a production app
   // These could be moved to a secure config file or environment variables
   static const String adminEmail = "admin@stitchmate.com";
-  static const String adminPassword = "admin123"; // Use a strong password in production
+  static const String adminPassword =
+      "admin123"; // Use a strong password in production
 
   @override
   void initState() {
@@ -43,16 +44,23 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _validateInputs() {
     final bool isEmailValid = _isValidEmail(_emailController.text);
-    final bool isPasswordEntered = _passwordController.text.isNotEmpty;
-    
+    final bool isPasswordValid = _passwordController.text.length >= 6;
+
     setState(() {
-      _emailError = _emailController.text.isEmpty ? null : 
-                   (isEmailValid ? null : 'Please enter a valid email address');
-      
-      _passwordError = null; // Simple validation for login - just needs to be non-empty
-      
+      _emailError =
+          _emailController.text.isEmpty
+              ? null
+              : (isEmailValid ? null : 'Please enter a valid email address');
+
+      _passwordError =
+          _passwordController.text.isEmpty
+              ? null
+              : (isPasswordValid
+                  ? null
+                  : 'Password must be at least 6 characters');
+
       // Button is enabled when both fields are valid
-      isButtonEnabled = isEmailValid && isPasswordEntered;
+      isButtonEnabled = isEmailValid && isPasswordValid;
     });
   }
 
@@ -65,47 +73,47 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _handleLogin() async {
     if (!isButtonEnabled || _isLoading) return;
-    
+
     // Get values
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
-    
+
     // Set loading state
     setState(() {
       _isLoading = true;
       _emailError = null;
       _passwordError = null;
     });
-    
+
     try {
       // Check if admin credentials were entered
       if (email == adminEmail && password == adminPassword) {
         // Navigate to admin screen
         if (mounted) {
           Navigator.pushAndRemoveUntil(
-            context, 
+            context,
             MaterialPageRoute(builder: (context) => const AdminScreen()),
             (route) => false, // Remove all previous routes
           );
         }
         return; // Skip normal authentication process
       }
-      
+
       // Get auth provider
       Provider.of<AuthProvider>(context, listen: false);
-      
+
       // Sign in with Supabase
       final response = await Supabase.instance.client.auth.signInWithPassword(
         email: email,
         password: password,
       );
-      
+
       // If successful, navigate to home screen
       if (response.user != null) {
         // Navigate to home screen
         if (mounted) {
           Navigator.pushAndRemoveUntil(
-            context, 
+            context,
             MaterialPageRoute(builder: (context) => const HomeScreen()),
             (route) => false, // Remove all previous routes
           );
@@ -120,9 +128,9 @@ class _LoginScreenState extends State<LoginScreen> {
           _passwordError = e.message;
         } else {
           // General error
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(e.message)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(e.message)));
         }
       });
     } catch (e) {
@@ -161,13 +169,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SizedBox(height: size.height * 0.05),
-                 
-                    SizedBox(height: size.height * 0.06),
-                  
 
-                  
+                    SizedBox(height: size.height * 0.06),
+
                     SizedBox(height: size.height * 0.05),
-                    
+
                     // Email Field
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 7),
@@ -208,7 +214,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     SizedBox(height: size.height * 0.02),
-                    
+
                     // Password Field
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 7),
@@ -247,95 +253,125 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           suffixIcon: IconButton(
                             icon: Icon(
-                              _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                              _obscurePassword
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
                               color: phonefieldtext,
                             ),
-                            onPressed: !_isLoading ? () {
-                              setState(() {
-                                _obscurePassword = !_obscurePassword;
-                              });
-                            } : null,
+                            onPressed:
+                                !_isLoading
+                                    ? () {
+                                      setState(() {
+                                        _obscurePassword = !_obscurePassword;
+                                      });
+                                    }
+                                    : null,
                           ),
                         ),
                       ),
                     ),
-                    
+
                     // Forgot Password Link
                     Align(
                       alignment: Alignment.centerRight,
                       child: Padding(
                         padding: const EdgeInsets.only(top: 8, right: 8),
                         child: TextButton(
-                          onPressed: () {
-                         
-                          } ,
+                          onPressed:
+                              !_isLoading
+                                  ? () {
+                                    Navigator.pushNamed(
+                                      context,
+                                      '/forgot-password',
+                                    );
+                                  }
+                                  : null,
                           child: Text(
                             'Forgot Password?',
                             style: TextStyle(
                               color: primaryColor,
-                              fontSize: 14,
+                              fontSize: 17,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
                       ),
                     ),
-                    
+
                     SizedBox(height: size.height * 0.04),
-                    
+
                     // Login Button
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 5),
                       child: SizedBox(
-                        height: isPortrait ? size.height * 0.07 : size.height * 0.1,
+                        height:
+                            isPortrait ? size.height * 0.07 : size.height * 0.1,
                         width: double.infinity,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: (isButtonEnabled && !_isLoading) ? primaryColor : nextbg,
+                            backgroundColor:
+                                (isButtonEnabled && !_isLoading)
+                                    ? primaryColor
+                                    : nextbg,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),
                           ),
-                          onPressed: (isButtonEnabled && !_isLoading) ? _handleLogin : null,
-                          child: _isLoading
-                              ? CircularProgressIndicator(color: Colors.white)
-                              : Text(
-                                  'Log In',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                    color: isButtonEnabled ? Colors.white : nexttext,
+                          onPressed:
+                              (isButtonEnabled && !_isLoading)
+                                  ? _handleLogin
+                                  : null,
+                          child:
+                              _isLoading
+                                  ? CircularProgressIndicator(
+                                    color: Colors.white,
+                                  )
+                                  : Text(
+                                    'Log In',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                      color:
+                                          isButtonEnabled
+                                              ? Colors.white
+                                              : nexttext,
+                                    ),
                                   ),
-                                ),
                         ),
                       ),
                     ),
-                    
+
                     SizedBox(height: size.height * 0.03),
-                    
+
                     // Don't have an account section
                     Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      padding: const EdgeInsets.symmetric(vertical: 1),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
                             "Don't have an account? ",
                             style: TextStyle(
-                              fontSize: 14,
+                              fontSize: 17,
                               fontWeight: FontWeight.w500,
                               color: lightblack,
                             ),
                           ),
                           TextButton(
-                            onPressed: !_isLoading ? () {
-                              Navigator.pushNamed(context, '/enteremail');
-                            } : null,
+                            onPressed:
+                                !_isLoading
+                                    ? () {
+                                      Navigator.pushNamed(
+                                        context,
+                                        '/enteremail',
+                                      );
+                                    }
+                                    : null,
                             child: Text(
                               'Sign Up',
                               style: TextStyle(
                                 color: primaryColor,
-                                fontSize: 14,
+                                fontSize: 17,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -343,10 +379,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         ],
                       ),
                     ),
-                    
+
                     // Optional: Social Login Buttons
                     SizedBox(height: size.height * 0.02),
-                  
                   ],
                 ),
               ),

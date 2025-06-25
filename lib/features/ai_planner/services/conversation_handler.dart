@@ -23,7 +23,8 @@ class ConversationHandler {
     // Start with a system message to set the assistant's behavior
     ChatMessageData(
       role: MessageRole.system,
-      content: "You are a helpful AI assistant.Don't use your name",
+      content:
+          "You are a helpful AI assistant. Keep your responses brief and to the point. Don't mention being an AI or model.",
     ),
   ];
 

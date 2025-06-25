@@ -8,8 +8,6 @@ import 'package:stitchmate/features/profile/viewmodels/profile_image_notifier.da
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:path/path.dart' as path;
 
-
-
 class ProfileProvider extends ChangeNotifier {
   final TextEditingController fnameController = TextEditingController();
   final TextEditingController lnameController = TextEditingController();
@@ -152,7 +150,8 @@ class ProfileProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
-// Updated method to upload profile image to Supabase storage
+
+  // Updated method to upload profile image to Supabase storage
   Future<String?> uploadProfileImage(String userId) async {
     if (_image == null) {
       return _profileImageUrl; // Return existing URL if no new image
@@ -207,7 +206,7 @@ class ProfileProvider extends ChangeNotifier {
       _imageChangeNotifier.updateImageUrl(currentUser.id, refreshUrl);
 
       debugPrint("Profile image uploaded successfully: $refreshUrl");
-   
+
       return refreshUrl;
     } catch (e) {
       _errorMessage = "Failed to upload profile image: ${e.toString()}";
@@ -264,10 +263,10 @@ class ProfileProvider extends ChangeNotifier {
           // Force a notification by updating twice with a slight delay
           // This ensures all listeners detect the change
           _imageChangeNotifier.updateImageUrl(userId, null);
-          
+
           // Small delay to ensure the change is detected
           await Future.delayed(Duration(milliseconds: 100));
-          
+
           // Now set the actual image URL
           _imageChangeNotifier.updateImageUrl(userId, imageUrl);
         }
@@ -288,12 +287,11 @@ class ProfileProvider extends ChangeNotifier {
       return false;
     }
   }
-  
+
   // Add a method to explicitly clear the current user's profile image cache
   void clearProfileImageCache(String userId) {
     _imageChangeNotifier.clearImageUrl(userId);
   }
-
 }
 
 class ProfileScreen extends StatelessWidget {

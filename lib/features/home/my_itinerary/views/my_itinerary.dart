@@ -204,7 +204,7 @@ class _MyItineraryState extends State<MyItinerary>
             '$label: ',
             style: const TextStyle(
               fontWeight: FontWeight.w500,
-              color: Colors.grey,
+              color: Color.fromARGB(255, 158, 158, 158),
             ),
           ),
           Expanded(

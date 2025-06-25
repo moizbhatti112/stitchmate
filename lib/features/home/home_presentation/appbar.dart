@@ -1,331 +1,270 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:stitchmate/core/constants/colors.dart';
-import 'package:stitchmate/core/widgets/shimmer.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:stitchmate/features/profile/viewmodels/profile_image_notifier.dart';
-
-final SupabaseClient _supabase = Supabase.instance.client;
+// import 'package:stitchmate/core/constants/colors.dart';
 
 class CustomAppBar extends StatefulWidget {
-  final bool forceRefresh;
-  
-  const CustomAppBar({
-    super.key,
-    this.forceRefresh = false,
-  });
+  const CustomAppBar({super.key});
 
   @override
   State<CustomAppBar> createState() => _CustomAppBarState();
 }
 
-class _CustomAppBarState extends State<CustomAppBar> {
-  File? _imagefile;
-  String? _profilePictureUrl;
-  bool _isLoading = true;
-  bool _isMounted = true;
-  String? _currentUserId; // Store the current user ID
-  DateTime _lastRefresh = DateTime.now();
-  
-  // Get the global image change notifier
-  final _imageChangeNotifier = ProfileImageChangeNotifier();
-  
+class _CustomAppBarState extends State<CustomAppBar>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<Offset> _slideAnimation;
+  bool _isNotificationBarOpen = false;
+
   @override
   void initState() {
     super.initState();
-    
-    // Use a post-frame callback to ensure we're not in the build phase
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadProfilePicture(forceRefresh: true);
-    });
-    
-    // Listen for changes to the profile image
-    _imageChangeNotifier.lastUpdated.addListener(_onProfileImageChanged);
-  }
-  
-  @override
-  void didUpdateWidget(CustomAppBar oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    
-    // Force refresh when the widget updates or when forceRefresh flag changes
-    if (widget.forceRefresh || oldWidget.forceRefresh != widget.forceRefresh) {
-      _loadProfilePicture(forceRefresh: true);
-    }
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(1.0, 0.0),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
   }
 
   @override
   void dispose() {
-    // Remove listener when disposing
-    _imageChangeNotifier.lastUpdated.removeListener(_onProfileImageChanged);
-    _isMounted = false;
+    _animationController.dispose();
     super.dispose();
   }
-  
-  // Called when the profile image changes
-  void _onProfileImageChanged() {
-    if (_isMounted) {
-      // Only reload if we haven't just refreshed (debounce)
-      if (DateTime.now().difference(_lastRefresh).inSeconds > 1) {
-        _loadProfilePicture(forceRefresh: true);
-      }
-    }
-  }
 
-  Future<void> _loadProfilePicture({bool forceRefresh = false}) async {
-    if (!_isMounted) return;
-    
-    // Update last refresh time
-    _lastRefresh = DateTime.now();
-    
-    setState(() {
-      _isLoading = true;
-    });
-    
-    final user = _supabase.auth.currentUser;
-    if (user == null) {
-      if (_isMounted) {
+  void _toggleNotificationBar() {
+    if (_isNotificationBarOpen) {
+      _animationController.reverse().then((_) {
         setState(() {
-          _isLoading = false;
-          _profilePictureUrl = null;
+          _isNotificationBarOpen = false;
         });
-      }
-      return;
-    }
-    
-    // Store current user ID
-    _currentUserId = user.id;
-
-    try {
-      // Check if the global notifier already has a URL for this user
-      final notifierUrl = _imageChangeNotifier.getImageUrl(user.id);
-      
-      // If we have a URL and not forcing refresh, use it
-      if (!forceRefresh && notifierUrl != null && notifierUrl.isNotEmpty) {
-        if (_isMounted) {
-          setState(() {
-            _profilePictureUrl = notifierUrl;
-            _isLoading = false;
-          });
-        }
-        return;
-      }
-      
-      // First try to get from user metadata (fastest method)
-      final profileUrl = user.userMetadata?['profileUrl'];
-      
-      if (profileUrl != null && profileUrl.isNotEmpty) {
-        if (_isMounted) {
-          setState(() {
-            _profilePictureUrl = '$profileUrl?t=${DateTime.now().millisecondsSinceEpoch}';
-            _isLoading = false;
-          });
-          
-          // Update the global notifier with user ID
-          _imageChangeNotifier.updateImageUrl(user.id, _profilePictureUrl);
-        }
-        return;
-      }
-      
-      // Then try to get from users table
-      if (user.email != null) {
-        try {
-          final userData = await _supabase
-              .from('users')
-              .select('imageurl')
-              .eq('email', user.email!)
-              .single();
-              
-          final dbImageUrl = userData['imageurl'];
-          if (dbImageUrl != null && dbImageUrl.isNotEmpty) {
-            if (_isMounted) {
-              // Add timestamp to URL to force refresh
-              final refreshedUrl = '$dbImageUrl?t=${DateTime.now().millisecondsSinceEpoch}';
-              
-              setState(() {
-                _profilePictureUrl = refreshedUrl;
-                _isLoading = false;
-              });
-              
-              // Update metadata for faster access next time
-              await _supabase.auth.updateUser(
-                UserAttributes(
-                  data: {'profileUrl': dbImageUrl},
-                ),
-              );
-              
-              // Update the global notifier with user ID
-              _imageChangeNotifier.updateImageUrl(user.id, refreshedUrl);
-            }
-            return;
-          }
-        } catch (e) {
-          debugPrint('Error fetching user data: $e');
-        }
-      }
-
-      // Fallback to the old method if no URL found
-      final files = await _supabase.storage
-          .from('profiles')
-          .list(path: 'profilepics');
-
-      if (!_isMounted) return;
-
-      final matchingFiles = files.where(
-        (file) => file.name.startsWith(user.id),
-      ).toList();
-      
-      if (matchingFiles.isNotEmpty) {
-        final matchingFile = matchingFiles.first;
-        final imageUrl = _supabase.storage
-            .from('profiles')
-            .getPublicUrl('profilepics/${matchingFile.name}');
-
-        // Add timestamp to force refresh
-        final refreshedUrl = '$imageUrl?t=${DateTime.now().millisecondsSinceEpoch}';
-
-        if (_isMounted) {
-          setState(() {
-            _profilePictureUrl = refreshedUrl;
-            _isLoading = false;
-          });
-          
-          // Save to user metadata for faster access next time
-          await _supabase.auth.updateUser(
-            UserAttributes(
-              data: {'profileUrl': imageUrl},
-            ),
-          );
-          
-          // Update the global notifier with user ID
-          _imageChangeNotifier.updateImageUrl(user.id, refreshedUrl);
-          
-          // Also update users table if email exists
-          if (user.email != null) {
-            try {
-              await _supabase
-                  .from('users')
-                  .update({'imageurl': imageUrl})
-                  .eq('email', user.email!);
-            } catch (e) {
-              debugPrint('Error updating user table: $e');
-            }
-          }
-        }
-      } else {
-        if (_isMounted) {
-          setState(() {
-            _profilePictureUrl = null;
-            _isLoading = false;
-          });
-          
-          // Update the global notifier with user ID and null
-          _imageChangeNotifier.updateImageUrl(user.id, null);
-        }
-      }
-    } catch (e) {
-      debugPrint('Error loading profile picture: $e');
-      if (_isMounted) {
-        setState(() {
-          _profilePictureUrl = null;
-          _isLoading = false;
-        });
-      }
+      });
+    } else {
+      setState(() {
+        _isNotificationBarOpen = true;
+      });
+      _animationController.forward();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final Size size = MediaQuery.sizeOf(context);
+    final size = MediaQuery.sizeOf(context);
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Stack(
       children: [
-        GestureDetector(
-          onTap: () {
-            Scaffold.of(context).openDrawer();
-          },
-          child: _isLoading 
-              ? ShimmerLoading(
-                  width: 40,
-                  height: 40,
-                )
-              : _buildProfileImage(),
-        ),
-        Container(
-          height: size.height * 0.06,
-          width: size.width * 0.6,
-          decoration: BoxDecoration(
-            color: phonefieldColor,
-            borderRadius: BorderRadius.circular(16),
+        SizedBox(
+          height: size.height * 0.18, // Increased height for the curved design
+          width: double.infinity,
+          child: Stack(
+            children: [
+              // Curved gradient background
+              ClipPath(
+                clipper: CurvedBottomClipper(),
+                child: Container(
+                  height: size.height * 0.22,
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFFFF6B35), // Orange-red
+                        Color(0xFFFF8C42), // Orange
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              // Content positioned over the gradient
+              Positioned(
+                top: MediaQuery.of(context).padding.top + 30,
+                left: 25,
+                right: 25,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Menu icon
+                    GestureDetector(
+                      onTap: () {
+                        Scaffold.of(context).openDrawer();
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.3),
+                            width: 1,
+                          ),
+                        ),
+                        padding: const EdgeInsets.all(12),
+                        child: Icon(Icons.menu, color: Colors.white, size: 24),
+                      ),
+                    ),
+                    Text(
+                      'StitchMate ',
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    // Notification icon with glass morphism effect
+                    GestureDetector(
+                      onTap: _toggleNotificationBar,
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: _loadSvg('assets/icons/notif.svg', 24, 24),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 15),
-            child: Row(
-              children: [
-                // The location row content
-              ],
+        ),
+
+        // Notification Bar Overlay
+        if (_isNotificationBarOpen)
+          GestureDetector(
+            onTap: _toggleNotificationBar,
+            child: Container(
+              color: Colors.black.withValues(alpha: 0.5),
+              width: double.infinity,
+              height: MediaQuery.of(context).size.height,
             ),
           ),
-        ),
-        _loadSvg('assets/icons/notif.svg', 24, 24),
+
+        // Notification Bar
+        if (_isNotificationBarOpen)
+          Positioned(
+            top: 0,
+            right: 0,
+            bottom: 0,
+            child: SlideTransition(
+              position: _slideAnimation,
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.85,
+                height: MediaQuery.of(context).size.height,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      blurRadius: 10,
+                      offset: const Offset(-2, 0),
+                    ),
+                  ],
+                ),
+                child: SafeArea(
+                  child: Column(
+                    children: [
+                      // Notification Bar Header
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Color(0xFFFF6B35), // Orange-red
+                              Color(0xFFFF8C42), // Orange
+                            ],
+                          ),
+                          borderRadius: const BorderRadius.only(
+                            bottomLeft: Radius.circular(20),
+                            bottomRight: Radius.circular(20),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Notifications',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: _toggleNotificationBar,
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(
+                                  Icons.close,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Notification Content
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: Container(
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.notifications_off_outlined,
+                                  size: 80,
+                                  color: Colors.grey[400],
+                                ),
+                                const SizedBox(height: 20),
+                                Text(
+                                  'No notifications yet',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                Text(
+                                  'When you receive notifications, they will appear here.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey[500],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
       ],
     );
-  }
-
-  Widget _buildProfileImage() {
-    if (_imagefile != null) {
-      return CircleAvatar(
-        radius: 20,
-        backgroundColor: Colors.grey[300],
-        backgroundImage: FileImage(_imagefile!),
-      );
-    } else if (_profilePictureUrl != null) {
-      // Add userId to cacheKey to ensure proper caching per user
-      final String userId = _currentUserId ?? 'unknown';
-      final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
-      
-      return CachedNetworkImage(
-        imageUrl: _profilePictureUrl!,
-        imageBuilder: (context, imageProvider) => CircleAvatar(
-          radius: 20,
-          backgroundColor: Colors.grey[300],
-          backgroundImage: imageProvider,
-        ),
-        placeholder: (context, url) => ShimmerLoading(
-          width: 40,
-          height: 40,
-        ),
-        errorWidget: (context, url, error) => CircleAvatar(
-          radius: 20,
-          backgroundColor: Colors.grey[300],
-          child: Image.asset(
-            'assets/icons/person.png',
-            color: black,
-            width: 24,
-            height: 24,
-          ),
-        ),
-        // Include userId in cacheKey to avoid sharing cached images between users
-        cacheKey: '${userId}_$timestamp',
-        // Disable caching to ensure we always get fresh images
-        cacheManager: null,
-        memCacheWidth: 160,
-        memCacheHeight: 160,
-      );
-    } else {
-      return CircleAvatar(
-        radius: 20,
-        backgroundColor: Colors.grey[300],
-        child: Image.asset(
-          'assets/icons/person.png',
-          color: black,
-          width: 24,
-          height: 24,
-        ),
-      );
-    }
   }
 
   Widget _loadSvg(String asset, double width, double height) {
@@ -333,7 +272,43 @@ class _CustomAppBarState extends State<CustomAppBar> {
       asset,
       width: width,
       height: height,
-      colorFilter: const ColorFilter.mode(black, BlendMode.srcIn),
+      colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
     );
   }
+}
+
+// Custom clipper for the curved bottom effect
+class CurvedBottomClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    path.lineTo(0, size.height - 50);
+
+    // Create a smooth curve
+    final firstControlPoint = Offset(size.width * 0.25, size.height);
+    final firstEndPoint = Offset(size.width * 0.5, size.height - 30);
+    path.quadraticBezierTo(
+      firstControlPoint.dx,
+      firstControlPoint.dy,
+      firstEndPoint.dx,
+      firstEndPoint.dy,
+    );
+
+    final secondControlPoint = Offset(size.width * 0.75, size.height - 60);
+    final secondEndPoint = Offset(size.width, size.height - 20);
+    path.quadraticBezierTo(
+      secondControlPoint.dx,
+      secondControlPoint.dy,
+      secondEndPoint.dx,
+      secondEndPoint.dy,
+    );
+
+    path.lineTo(size.width, 0);
+    path.close();
+
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }

@@ -5,15 +5,19 @@ import 'package:stitchmate/core/constants/stripe_keys.dart';
 import 'package:stitchmate/core/helperfunctions/network_provider.dart';
 import 'package:stitchmate/features/ai_planner/viewmodels/chat_viewmodel.dart';
 import 'package:stitchmate/features/ai_planner/views/chat_screen.dart';
+import 'package:stitchmate/features/ai_planner/views/travel_preference.dart';
 import 'package:stitchmate/features/authentication/viewmodels/auth_provider.dart';
 
 import 'package:stitchmate/features/authentication/views/add_phone.dart';
 import 'package:stitchmate/features/authentication/views/email_address.dart';
+import 'package:stitchmate/features/authentication/views/forgot_password_email_screen.dart';
 import 'package:stitchmate/features/authentication/views/loginscreen.dart';
+import 'package:stitchmate/features/authentication/views/reset_password_screen.dart';
 import 'package:stitchmate/features/authentication/views/signup_screen.dart';
+import 'package:stitchmate/features/authentication/views/verify_code_screen.dart';
 import 'package:stitchmate/features/authentication/views/welcome.dart';
 import 'package:stitchmate/features/home/concierge_services/views/concierge_services.dart';
-import 'package:stitchmate/features/home/event_transportation/views/event_transportation.dart';
+import 'package:stitchmate/features/home/expense_tracker/views/expense_tracker.dart';
 import 'package:stitchmate/features/home/ground_transport/viewmodels/booking_provider.dart';
 import 'package:stitchmate/features/home/ground_transport/viewmodels/choosevehicle_provider.dart';
 import 'package:stitchmate/features/home/ground_transport/viewmodels/route_provider.dart';
@@ -34,7 +38,10 @@ import 'package:stitchmate/features/home/plane_transport/views/luxury_plane_tran
 import 'package:stitchmate/features/home/secure_travel/secure_travel.dart';
 import 'package:stitchmate/features/profile/views/profile_screen.dart';
 import 'package:provider/provider.dart';
+import 'package:stitchmate/features/settings/views/help_support_screen.dart';
+import 'package:stitchmate/features/settings/views/settings_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:stitchmate/features/home/quick_tips/quick_tips_screen.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -69,7 +76,7 @@ void main() async {
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhlZ3V4enpnYXNvbHpwanZjbW15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQxMDY2NjgsImV4cCI6MjA1OTY4MjY2OH0.dTV6HB5S8A10DaDbR0Q2Ip7mOBwFziDwr_I6xl_eeEc',
     url: 'https://heguxzzgasolzpjvcmmy.supabase.co',
   );
-  
+
   // Initialize essential resources before app startup
   await _initializeResources();
 
@@ -99,7 +106,7 @@ class AuthStateCheck extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    
+
     // Simple check: if authenticated go to home, otherwise login
     if (authProvider.isAuthenticated) {
       return const HomeScreen();
@@ -141,7 +148,10 @@ class MyApp extends StatelessWidget {
         '/profilescreen': (context) => const ProfileScreen(),
         '/homescreen': (context) => const HomeScreen(),
         '/luxurytransport': (context) => const LuxuryGroundTransportation(),
-        '/login': (context) => const LoginScreen(), 
+        '/login': (context) => const LoginScreen(),
+        '/forgot-password': (context) => const ForgotPasswordEmailScreen(),
+        '/verify-code': (context) => const VerifyCodeScreen(),
+        '/reset-password': (context) => const ResetPasswordScreen(),
         '/luxurywelcome': (context) => const WelcomeScreen(),
         '/choosevehicle': (context) => const ChooseVehicle(),
         //  '/choosevehicle': (context) => const CarSelectionScreen(),
@@ -150,10 +160,15 @@ class MyApp extends StatelessWidget {
         '/jetwelcome': (context) => const JetWelcome(),
         '/jetbooking': (context) => const LuxuryPlaneTransportation(),
         '/chooseplane': (context) => const ChoosePlane(),
-        '/event': (context) => const EventTransportation(),
+        '/event': (context) => const TripExpenseScreen(),
         '/concierge': (context) => const ConciergeServices(),
         '/securetravel': (context) => const SecureTravel(),
         '/planebc': (context) => const PlaneBookingConfirmation(),
+        '/travelp': (context) => const TravelPreferencesScreen(),
+        '/quick-tips': (context) => const QuickTipsScreen(),
+        '/settings': (context) => const SettingsScreen(),
+         '/support': (context) => const HelpSupportScreen(),
+          // '/payment-methods': (context) => const HelpSupportScreen(),
         // '/paymentmethod': (context) => const PaymentSelectionScreen(),
       },
     );

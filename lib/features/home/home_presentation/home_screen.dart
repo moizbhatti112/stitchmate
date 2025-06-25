@@ -4,15 +4,16 @@ import 'package:flutter_svg/svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:stitchmate/core/constants/colors.dart';
-import 'package:stitchmate/features/ai_planner/views/ai_welcome.dart';
+// import 'package:stitchmate/features/ai_planner/views/ai_welcome.dart';
 import 'package:stitchmate/features/authentication/viewmodels/auth_provider.dart';
 import 'package:stitchmate/features/home/home_presentation/appbar.dart';
 import 'package:stitchmate/features/home/home_presentation/circular_menu.dart';
-import 'package:stitchmate/features/home/home_presentation/search_field.dart';
+// import 'package:stitchmate/features/home/home_presentation/search_field.dart';
 import 'package:stitchmate/features/home/my_itinerary/views/my_itinerary.dart';
-import 'package:stitchmate/features/home/rewards/views/reward_screen.dart';
 import 'package:stitchmate/features/profile/viewmodels/profile_image_notifier.dart';
 import 'package:stitchmate/features/profile/views/profile_screen.dart';
+import 'package:stitchmate/features/ai_planner/views/saved_trip_plans.dart';
+import 'package:stitchmate/features/ai_planner/views/chat_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -215,7 +216,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               _buildNavigator(0, HomeContent(refreshAppBar: _refreshAppBar)),
               _buildNavigator(1, MyItinerary(key: ValueKey(_refreshItinerary))),
-              _buildNavigator(2, const RewardScreen()),
+              _buildNavigator(2, const SavedTripPlans()),
             ],
           ),
           bottomNavigationBar: BottomNavigationBar(
@@ -233,8 +234,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 label: 'My Itinerary',
               ),
               BottomNavigationBarItem(
-                icon: FaIcon(FontAwesomeIcons.gift),
-                label: 'Rewards',
+                icon: Icon(Icons.bookmark),
+                label: 'Trip Plans',
               ),
             ],
           ),
@@ -263,7 +264,7 @@ class _HomeScreenState extends State<HomeScreen> {
         padding: EdgeInsets.zero,
         children: [
           UserAccountsDrawerHeader(
-            decoration: BoxDecoration(color: primaryColor),
+            decoration: BoxDecoration(color: Color.fromARGB(255, 192, 103, 48)),
             accountName: Text(
               '',
               style: TextStyle(
@@ -273,10 +274,14 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             accountEmail: Text(
-              userEmail,
-              style: TextStyle(color: Colors.white, fontSize: 14),
+              'Current User: $userEmail',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-            currentAccountPicture: _buildDrawerProfilePicture(),
+            // currentAccountPicture: _buildDrawerProfilePicture(),
           ),
           _buildDrawerItem(Icons.person, 'Profile', _navigateToProfile),
           _buildDrawerItem(
@@ -284,16 +289,12 @@ class _HomeScreenState extends State<HomeScreen> {
             'Settings',
             () => Navigator.pushNamed(context, '/settings'),
           ),
-          _buildDrawerItem(
-            Icons.history,
-            'Trip History',
-            () => Navigator.pushNamed(context, '/trip-history'),
-          ),
-          _buildDrawerItem(
-            Icons.payment,
-            'Payment Methods',
-            () => Navigator.pushNamed(context, '/payment-methods'),
-          ),
+
+          // _buildDrawerItem(
+          //   Icons.payment,
+          //   'Payment Methods',
+          //   () => Navigator.pushNamed(context, '/payment-methods'),
+          // ),
           _buildDrawerItem(
             Icons.support_agent,
             'Support',
@@ -313,36 +314,38 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildDrawerProfilePicture() {
-    final userId =
-        Provider.of<AuthProvider>(context, listen: false).user?.id ?? 'unknown';
+  // Widget _buildDrawerProfilePicture() {
+  //   final userId =
+  //       Provider.of<AuthProvider>(context, listen: false).user?.id ?? 'unknown';
 
-    // Use ValueListenableBuilder to rebuild when image changes
-    return ValueListenableBuilder<DateTime>(
-      valueListenable: _imageChangeNotifier.lastUpdated,
-      builder: (context, lastUpdated, child) {
-        final profileUrl = _imageChangeNotifier.getImageUrl(userId);
+  //   // Use ValueListenableBuilder to rebuild when image changes
+  //   return ValueListenableBuilder<DateTime>(
+  //     valueListenable: _imageChangeNotifier.lastUpdated,
+  //     builder: (context, lastUpdated, child) {
+  //       final profileUrl = _imageChangeNotifier.getImageUrl(userId);
 
-        if (profileUrl != null && profileUrl.isNotEmpty) {
-          return CircleAvatar(
-            backgroundColor: Colors.white,
-            backgroundImage: NetworkImage(
-              // Add timestamp parameter to prevent caching issues
-              '$profileUrl?t=${DateTime.now().millisecondsSinceEpoch}',
-            ),
-            onBackgroundImageError: (exception, stackTrace) {
-              debugPrint('Error loading profile image in drawer: $exception');
-            },
-          );
-        } else {
-          return CircleAvatar(
-            backgroundColor: Colors.white,
-            child: Icon(Icons.person, color: primaryColor, size: 40),
-          );
-        }
-      },
-    );
-  }
+  //       if (profileUrl != null && profileUrl.isNotEmpty) {
+  //         return CircleAvatar(
+  //           radius: 30,
+  //           backgroundColor: Colors.white,
+  //           backgroundImage: NetworkImage(
+  //             // Add timestamp parameter to prevent caching issues
+  //             '$profileUrl?t=${DateTime.now().millisecondsSinceEpoch}',
+  //           ),
+  //           onBackgroundImageError: (exception, stackTrace) {
+  //             debugPrint('Error loading profile image in drawer: $exception');
+  //           },
+  //         );
+  //       } else {
+  //         return CircleAvatar(
+  //           radius: 30,
+  //           backgroundColor: Colors.white,
+  //           child: Icon(Icons.person, color: primaryColor, size: 40),
+  //         );
+  //       }
+  //     },
+  //   );
+  // }
 
   void _navigateToProfile() {
     Navigator.push(
@@ -379,15 +382,15 @@ class HomeContent extends StatelessWidget {
     final Size size = MediaQuery.sizeOf(context);
 
     return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 10),
-        child: Column(
-          children: [
-            CustomAppBar(forceRefresh: refreshAppBar),
-            SizedBox(height: size.height * 0.02),
-            const SearchField(),
-            SizedBox(height: size.height * 0.02),
-            Column(
+      child: Column(
+        children: [
+          CustomAppBar(),
+          SizedBox(height: size.height * 0.02),
+          // const SearchField(),
+          SizedBox(height: size.height * 0.02),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Row(
@@ -414,9 +417,10 @@ class HomeContent extends StatelessWidget {
                     CircularMenu(
                       child: _loadSvg('assets/icons/planning.svg'),
                       onpress: () {
-                        Navigator.of(context, rootNavigator: true).push(
-                          MaterialPageRoute(builder: (context) => AiWelcome()),
-                        );
+                        Navigator.of(
+                          context,
+                          rootNavigator: true,
+                        ).pushNamed('/travelp');
                       },
                     ),
                   ],
@@ -444,21 +448,30 @@ class HomeContent extends StatelessWidget {
                       },
                     ),
                     CircularMenu(
-                      child: _loadSvg('assets/icons/glass.svg'),
+                      child: Icon(
+                        Icons.chat_bubble_outline,
+                        size: 32,
+                        color: primaryColor,
+                      ),
                       onpress: () {
-                        Navigator.of(
-                          context,
-                          rootNavigator: true,
-                        ).pushNamed('/concierge');
+                        Navigator.of(context, rootNavigator: true).push(
+                          MaterialPageRoute(
+                            builder: (context) => const ChatScreen(),
+                          ),
+                        );
                       },
                     ),
                     CircularMenu(
-                      child: _loadSvg('assets/icons/lock.svg'),
+                      child: Icon(
+                        Icons.tips_and_updates_outlined,
+                        size: 32,
+                        color: primaryColor,
+                      ),
                       onpress: () {
                         Navigator.of(
                           context,
                           rootNavigator: true,
-                        ).pushNamed('/securetravel');
+                        ).pushNamed('/quick-tips');
                       },
                     ),
                   ],
@@ -467,15 +480,15 @@ class HomeContent extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildLabel('Event\nTransportation'),
-                    _buildLabel('Concierge\n Services'),
-                    _buildLabel('Secure Travel\nSolutions'),
+                    _buildLabel('Expense\nTracker'),
+                    _buildLabel('     AI Chat\n    Assistant'),
+                    _buildLabel('Quick Tips &\nTricks'),
                   ],
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stitchmate/core/constants/colors.dart';
-import 'package:stitchmate/features/home/ground_transport/payment/views/payment_success.dart';
+import 'package:stitchmate/features/home/plane_transport/payment/views/pl_payment_success.dart';
 import 'package:stitchmate/features/home/plane_transport/services/plane_order_service.dart';
 import 'package:stitchmate/features/home/plane_transport/viewmodels/booking_provider.dart';
 import 'package:stitchmate/features/home/plane_transport/viewmodels/location_service.dart';

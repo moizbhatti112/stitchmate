@@ -37,9 +37,10 @@ class _ChooseVehicleState extends State<ChooseVehicle> {
 
     // Get selected vehicle details if available
     final selectedVehicle = provider.getSelectedVehicleDetails();
-    final selectedCarType = provider.carTypes.isEmpty 
-        ? null 
-        : provider.carTypes[provider.selectedCarIndex];
+    final selectedCarType =
+        provider.carTypes.isEmpty
+            ? null
+            : provider.carTypes[provider.selectedCarIndex];
 
     // Show loading indicator while fetching data
     if (provider.isLoading) {
@@ -213,44 +214,45 @@ class _ChooseVehicleState extends State<ChooseVehicle> {
                   ],
                 ),
               ),
-          
+
               // Display vehicle image from Supabase if available, otherwise use asset
               selectedCarType?.imageUrl != null
                   ? Container(
-                      width: size.width * 1,
-                      height: size.height * 0.3,
-                      padding: const EdgeInsets.all(16),
-                      child: Image.network(
-                        selectedCarType!.imageUrl!,
-                        width: size.width * 0.8,
-                        height: size.height * 0.25,
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Image.asset(
-                            selectedCarType.path,
-                            width: size.width * 0.8,
-                            height: size.height * 0.25,
-                            fit: BoxFit.contain,
-                          );
-                        },
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Center(
-                            child: CircularProgressIndicator(
-                              value: loadingProgress.expectedTotalBytes != null
-                                  ? loadingProgress.cumulativeBytesLoaded /
-                                      loadingProgress.expectedTotalBytes!
-                                  : null,
-                            ),
-                          );
-                        },
-                      ),
-                    )
-                  : Image.asset(
-                      selectedCarType?.path ?? 'assets/images/mercedes.png',
-                      width: size.width * 1,
-                      height: size.height * 0.3,
+                    width: size.width * 1,
+                    height: size.height * 0.3,
+                    padding: const EdgeInsets.all(16),
+                    child: Image.network(
+                      selectedCarType!.imageUrl!,
+                      width: size.width * 0.8,
+                      height: size.height * 0.25,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Image.asset(
+                          selectedCarType.path,
+                          width: size.width * 0.8,
+                          height: size.height * 0.25,
+                          fit: BoxFit.contain,
+                        );
+                      },
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Center(
+                          child: CircularProgressIndicator(
+                            value:
+                                loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                        loadingProgress.expectedTotalBytes!
+                                    : null,
+                          ),
+                        );
+                      },
                     ),
+                  )
+                  : Image.asset(
+                    selectedCarType?.path ?? 'assets/images/mercedes.png',
+                    width: size.width * 1,
+                    height: size.height * 0.3,
+                  ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
@@ -269,13 +271,17 @@ class _ChooseVehicleState extends State<ChooseVehicle> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 5,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Divider(color: nextbg),
                     // Show vehicle description if available
-                    if (selectedVehicle != null && selectedVehicle.description.isNotEmpty)
+                    if (selectedVehicle != null &&
+                        selectedVehicle.description.isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 10),
                         child: Text(
@@ -343,7 +349,7 @@ class _ChooseVehicleState extends State<ChooseVehicle> {
                   itemBuilder: (context, index) {
                     final carType = provider.carTypes[index];
                     final isSelected = provider.selectedCarIndex == index;
-                    
+
                     return GestureDetector(
                       onTap: () => provider.selectCar(index),
                       child: Container(
@@ -354,7 +360,10 @@ class _ChooseVehicleState extends State<ChooseVehicle> {
                           color: isSelected ? secondaryColor : phonefieldColor,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: isSelected ? primaryColor : Colors.grey.shade300,
+                            color:
+                                isSelected
+                                    ? primaryColor
+                                    : Colors.grey.shade300,
                             width: 1.5,
                           ),
                         ),
@@ -364,22 +373,22 @@ class _ChooseVehicleState extends State<ChooseVehicle> {
                             // Display car image from Supabase or asset
                             carType.imageUrl != null
                                 ? Image.network(
-                                    carType.imageUrl!,
-                                    height: 60,
-                                    fit: BoxFit.contain,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return Image.asset(
-                                        carType.path,
-                                        height: 60,
-                                        fit: BoxFit.contain,
-                                      );
-                                    },
-                                  )
+                                  carType.imageUrl!,
+                                  height: 80,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Image.asset(
+                                      carType.path,
+                                      height: 60,
+                                      fit: BoxFit.contain,
+                                    );
+                                  },
+                                )
                                 : Image.asset(
-                                    carType.path,
-                                    height: 60,
-                                    fit: BoxFit.contain,
-                                  ),
+                                  carType.path,
+                                  height: 60,
+                                  fit: BoxFit.contain,
+                                ),
                             Text(
                               carType.title,
                               style: const TextStyle(
@@ -390,15 +399,17 @@ class _ChooseVehicleState extends State<ChooseVehicle> {
                               ),
                             ),
                             SizedBox(height: size.height * 0.01),
-                            Text(
-                              '\$${carType.price} USD',
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontFamily: 'PPNeueMontreal',
-                                fontWeight: FontWeight.bold,
-                                color: grey,
+                            if (carType.price !=
+                                null) // Only show price if it exists
+                              Text(
+                                '',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontFamily: 'PPNeueMontreal',
+                                  fontWeight: FontWeight.bold,
+                                  color: grey,
+                                ),
                               ),
-                            ),
                           ],
                         ),
                       ),

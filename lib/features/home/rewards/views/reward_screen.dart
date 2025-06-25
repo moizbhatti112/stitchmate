@@ -15,7 +15,7 @@ class RewardScreen extends StatelessWidget {
       },
       child: Scaffold(
         backgroundColor: bgColor,
-       
+
         body: const Center(child: Text("Rewards Screen")),
       ),
     );

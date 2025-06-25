@@ -345,15 +345,15 @@ class _ChoosePlaneState extends State<ChoosePlane> {
                               ),
                             ),
                             SizedBox(height: size.height * 0.01),
-                            Text(
-                              '\$${planeType.price} USD',
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontFamily: 'PPNeueMontreal',
-                                fontWeight: FontWeight.bold,
-                                color: grey,
-                              ),
-                            ),
+                            // Text(
+                            //   '\$${planeType.price} USD',
+                            //   style: const TextStyle(
+                            //     fontSize: 18,
+                            //     fontFamily: 'PPNeueMontreal',
+                            //     fontWeight: FontWeight.bold,
+                            //     color: grey,
+                            //   ),
+                            // ),
                           ],
                         ),
                       ),

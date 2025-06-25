@@ -5,12 +5,12 @@ class Vehicle {
   final String name;
   final String model;
   final int year;
-  final double price;
+  final double? price;
   final String imageUrl;
   final String description;
   final String vehicleType;
   final DateTime createdAt;
-  
+
   // Optional fields for planes
   final int? rangeKm;
   final int? maxAltitudeFt;
@@ -21,7 +21,7 @@ class Vehicle {
     required this.name,
     required this.model,
     required this.year,
-    required this.price,
+    this.price,
     required this.imageUrl,
     required this.description,
     required this.vehicleType,
@@ -34,7 +34,7 @@ class Vehicle {
   factory Vehicle.fromJson(Map<String, dynamic> json) {
     // Add debug print to check raw data
     debugPrint('Raw vehicle JSON: $json');
-    
+
     // Safely parse the id field - could be int or String
     int parsedId;
     if (json['id'] is int) {
@@ -44,7 +44,7 @@ class Vehicle {
     } else {
       throw FormatException('Invalid ID format: ${json['id']}');
     }
-    
+
     // Safely parse the year field - could be int or String
     int parsedYear;
     if (json['year'] is int) {
@@ -54,19 +54,19 @@ class Vehicle {
     } else {
       throw FormatException('Invalid year format: ${json['year']}');
     }
-    
-    // Safely parse the price field - could be double, int, or String
-    double parsedPrice;
-    if (json['price'] is double) {
-      parsedPrice = json['price'] as double;
-    } else if (json['price'] is int) {
-      parsedPrice = (json['price'] as int).toDouble();
-    } else if (json['price'] is String) {
-      parsedPrice = double.parse(json['price'] as String);
-    } else {
-      throw FormatException('Invalid price format: ${json['price']}');
+
+    // Safely parse the price field - could be double, int, String, or null
+    double? parsedPrice;
+    if (json['price'] != null) {
+      if (json['price'] is double) {
+        parsedPrice = json['price'] as double;
+      } else if (json['price'] is int) {
+        parsedPrice = (json['price'] as int).toDouble();
+      } else if (json['price'] is String) {
+        parsedPrice = double.parse(json['price'] as String);
+      }
     }
-    
+
     // Safely parse optional plane fields (if they exist)
     int? rangeKm;
     if (json['range_km'] != null) {
@@ -76,7 +76,7 @@ class Vehicle {
         rangeKm = int.parse(json['range_km'] as String);
       }
     }
-    
+
     int? maxAltitudeFt;
     if (json['max_altitude_ft'] != null) {
       if (json['max_altitude_ft'] is int) {
@@ -85,7 +85,7 @@ class Vehicle {
         maxAltitudeFt = int.parse(json['max_altitude_ft'] as String);
       }
     }
-    
+
     int? maxSpeedKn;
     if (json['max_speed_kn'] != null) {
       if (json['max_speed_kn'] is int) {
@@ -94,7 +94,7 @@ class Vehicle {
         maxSpeedKn = int.parse(json['max_speed_kn'] as String);
       }
     }
-    
+
     return Vehicle(
       id: parsedId,
       name: json['name'] as String,
@@ -113,9 +113,9 @@ class Vehicle {
 
   bool get isPlane => vehicleType == 'plane';
   bool get isCar => vehicleType == 'car';
-  
+
   // Format price as currency
   String get formattedPrice {
-    return '\$${price.toStringAsFixed(2)}';
+    return price != null ? '\$${price!.toStringAsFixed(2)}' : 'Price not set';
   }
 }
